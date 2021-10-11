@@ -95,7 +95,7 @@ class Landing1DEnv(AbstractMDP):
 
         #Integration of equations of motion
         sol = solve_ivp(fun=self.dynamics, t_span=[state["t"], state["t"]+self.dt], y0=s, method='RK45', 
-            args=(self.g, control, self.c), rtol=1e-8, atol=1e-8)
+            args=(self.g, control, self.c), rtol=1e-6, atol=1e-6)
 
         #State at next time-step
         s_new = {"h": sol.y[0][-1], "v": sol.y[1][-1], "m": sol.y[2][-1], "t": sol.t[-1]}

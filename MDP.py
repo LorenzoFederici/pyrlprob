@@ -31,8 +31,8 @@ class AbstractMDP(gym.Env):
         self.iter0 = 0
         self.iterf = 1
 
-        if hasattr(self, 'prg_seed'):
-            seeds = self.seed(self.prg_seed)
+        if hasattr(self, 'prng_seed'):
+            seeds = self.seed(self.prng_seed)
         else:
             seeds = self.seed()
 

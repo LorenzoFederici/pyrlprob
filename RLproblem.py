@@ -390,7 +390,7 @@ class RLProblem:
               evaluate: bool=True, 
               evaluation_num_episodes: int=1,
               postprocess: bool=True,
-              debug: bool=False) -> None:
+              debug: bool=False) -> Tuple[str, str, str]:
         """
         Solve a RL problem.
         It include pre-processing and training, 
@@ -402,6 +402,11 @@ class RLProblem:
             evaluation_num_episodes (int): number of evaluation episodes
             evaluate (bool): whether to do postprocessing
             debug (bool): whether to print worker's logs.
+        
+        Return:
+            trainer_dir (str): trainer directory
+            best_exp_dir (str): best experiment directory
+            best_cp_dir (str): best checkpoint directory
         """
         
         #Training
@@ -421,17 +426,21 @@ class RLProblem:
                 exp_dirs = self.load["exp_dirs"].append(best_exp_dir)
                 last_cps = self.load["last_cps"].append(last_checkpoint)
 
-            self.evaluate(trainer_dir=trainer_dir, 
-                 exp_dirs=exp_dirs,
-                 last_cps=last_cps,
-                 env=self.env, 
-                 env_config=self.env_config,
-                 evaluation_num_episodes=evaluation_num_episodes,
-                 evaluation_config=self.evaluation_config, 
-                 custom_eval_function=self.config["custom_eval_function"], 
-                 metrics_and_data=self.postproc, 
-                 evaluation=self.evaluation, 
-                 postprocess=postprocess)
+            best_cp_dir = self.evaluate(trainer_dir=trainer_dir, 
+                                        exp_dirs=exp_dirs,
+                                        last_cps=last_cps,
+                                        env=self.env, 
+                                        env_config=self.env_config,
+                                        evaluation_num_episodes=evaluation_num_episodes,
+                                        evaluation_config=self.evaluation_config, 
+                                        custom_eval_function=self.config["custom_eval_function"], 
+                                        metrics_and_data=self.postproc, 
+                                        evaluation=self.evaluation, 
+                                        postprocess=postprocess)
+        else:
+            best_cp_dir = best_exp_dir
+
+        return trainer_dir, best_exp_dir, best_cp_dir
 
 
 
