@@ -3,7 +3,7 @@ import gym
 import numpy as np
 from typing import *
 
-from utils.auxiliary import *
+from pyrlprob.utils.auxiliary import *
 
 class AbstractMDP(gym.Env):
     """
@@ -171,7 +171,9 @@ class AbstractMDP(gym.Env):
         elif iter >= self.iterf:
             self.epsilon = self.epsilonf
         else:
-            self.epsilon = self.epsilon0*(self.epsilonf/self.epsilon0)**(float(iter - self.iter0)/float(self.iterf - self.iter0))
+            self.epsilon = \
+                self.epsilon0*(self.epsilonf/self.epsilon0)**(float(iter - \
+                self.iter0)/float(self.iterf - self.iter0))
     
 
     def step(self, action):

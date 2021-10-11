@@ -9,8 +9,8 @@ from ray import tune
 import yaml
 import os
 
-from utils.auxiliary import *
-from utils.callbacks import *
+from pyrlprob.utils.auxiliary import *
+from pyrlprob.utils.callbacks import *
 
 
 class RLProblem:
@@ -33,7 +33,8 @@ class RLProblem:
 
         #Trainer definition
         self.__algorithm = settings["run"]
-        self.trainer = globals()["ray.rllib.agents." + self.__algorithm + "." + self.__algorithm.upper() +  "Trainer"]
+        self.trainer = globals()["ray.rllib.agents." + \
+            self.__algorithm + "." + self.__algorithm.upper() +  "Trainer"]
 
         #Config and stopping criteria definition
         self.stop = settings["stop"]
@@ -113,7 +114,8 @@ class RLProblem:
             stop (dict): stopping conditions (dictionary)
             logdir (str): name of the directory where training results are saved
             create_out_file (bool): whether to create an outfile with run time and best result
-            load (dict): dictionary containing the directory and checkpoint where the pre-trained model to load is located
+            load (dict): dictionary containing the directory and checkpoint where the 
+                pre-trained model to load is located
             debug (bool): whether to print worker's logs.
         
         Return:
@@ -138,17 +140,16 @@ class RLProblem:
         
         #Train the model
         start_time = time.time()
-        analysis = tune.run(
-            trainer,
-            config=config,
-            local_dir=outdir,
-            restore=restore,
-            stop=stop,
-            metric="episode_reward_mean",
-            mode="max",
-            checkpoint_freq=1,
-            checkpoint_at_end=True,
-            keep_checkpoints_num=None)
+        analysis = tune.run(trainer,
+                            config=config,
+                            local_dir=outdir,
+                            restore=restore,
+                            stop=stop,
+                            metric="episode_reward_mean",
+                            mode="max",
+                            checkpoint_freq=1,
+                            checkpoint_at_end=True,
+                            keep_checkpoints_num=None)
         end_time = time.time()
 
         #Best trial
@@ -168,8 +169,10 @@ class RLProblem:
                 % ("# elapsed time [s]", "training_iteration", \
                 "episode_reward_mean", "episode_reward_max", "episode_reward_min"))
             f_out_res.write("%22.7f %22d %22.7f %22.7f %22.7f\n" \
-                % (end_time - start_time, self.stop["training_iteration"], best_result["episode_reward_mean"], \
-                    best_result["episode_reward_max"], best_result["episode_reward_min"]))
+                % (end_time - start_time, self.stop["training_iteration"], \
+                    best_result["episode_reward_mean"], \
+                    best_result["episode_reward_max"], \
+                    best_result["episode_reward_min"]))
             f_out_res.close()
 
         #Terminate ray
@@ -217,7 +220,8 @@ class RLProblem:
         #Determine the best checkpoint
         episode_reward = []
         for exp_num, exp_dir in enumerate(exp_dirs):
-            episode_reward = episode_reward + column_progress(exp_dir+"progress.csv", metric_path + "episode_reward_mean", last_cps[exp_num]+1)
+            episode_reward = episode_reward + column_progress(exp_dir+"progress.csv", \
+                metric_path + "episode_reward_mean", last_cps[exp_num]+1)
         best_cp = np.argmax(episode_reward)+1
         best_exp = next(exp for exp, cp in enumerate(last_cps) if cp >= best_cp)
         best_exp_dir = exp_dirs[best_exp]
@@ -259,17 +263,17 @@ class RLProblem:
 
         #Evaluation
         _, new_best_exp_dir = self.train(trainer=trainer, 
-              config=config,
-              stop=stop,
-              load=load)
+                                         config=config,
+                                         stop=stop,
+                                         load=load)
         
         #Postprocessing
         if postprocess:
             cp_dir = self.postprocess(best_exp_dir=new_best_exp_dir, 
-                    checkpoint=best_cp, 
-                    custom_metrics=metrics_and_data["custom_metrics"], 
-                    postproc=metrics_and_data, 
-                    evaluation=evaluation)
+                                      checkpoint=best_cp, 
+                                      custom_metrics=metrics_and_data["custom_metrics"], 
+                                      postproc=metrics_and_data, 
+                                      evaluation=evaluation)
         else:
             cp_dir, _ = get_cp_dir_and_model(new_best_exp_dir, best_cp)
         

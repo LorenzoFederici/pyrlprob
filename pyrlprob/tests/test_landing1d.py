@@ -1,5 +1,4 @@
-from RLproblem import RLProblem
-from tests.Landing1D import Landing1DEnv
+from pyrlprob.problem import RLProblem
 
 if __name__ == "__main__":
 
