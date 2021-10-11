@@ -7,7 +7,7 @@ import gym
 import tensorflow as tf
 import torch
 
-def set_global_seeds(seed):
+def set_global_seeds(seed: Optional[int]=None) -> List[int]:
     """
     set the seed for python random, tensorflow, pytorch, numpy and gym spaces
 
@@ -21,6 +21,8 @@ def set_global_seeds(seed):
     random.seed(seed)
     if hasattr(gym.spaces, 'prng'):
         gym.spaces.prng.seed(seed)
+
+    return [seed]
 
 
 def get_cp_dir_and_model(logdir: str, 

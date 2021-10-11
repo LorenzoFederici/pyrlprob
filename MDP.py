@@ -1,11 +1,9 @@
 import gym
 
 import numpy as np
-import random
-import math
 from typing import *
 
-from auxiliary import *
+from utils.auxiliary import *
 
 class AbstractMDP(gym.Env):
     """
@@ -33,9 +31,14 @@ class AbstractMDP(gym.Env):
         self.iter0 = 0
         self.iterf = 1
 
+        if hasattr(self, 'prg_seed'):
+            seeds = self.seed(self.prg_seed)
+        else:
+            seeds = self.seed()
 
-    def set_seed(self,
-                 seed: Optional[int]=None) -> int:
+
+    def seed(self,
+             seed: Optional[int]=None) -> List[int]:
         """
         Set global seeds.
 
@@ -43,7 +46,9 @@ class AbstractMDP(gym.Env):
             seed (int): seed
         """
 
-        set_global_seeds(seed)
+        seeds = set_global_seeds(seed)
+
+        return seeds
     
 
     def get_observation(self,
@@ -129,7 +134,9 @@ class AbstractMDP(gym.Env):
                  prev_state: Optional[Any]=None,
                  state: Optional[Any]=None,
                  observation: Optional[Any]=None,
-                 control: Optional[Any]=None) -> Dict[str, Any]:
+                 control: Optional[Any]=None,
+                 reward: Optional[float]=None,
+                 done: Optional[bool]=None) -> Dict[str, Any]:
         """
         Get current info.
 
@@ -138,6 +145,8 @@ class AbstractMDP(gym.Env):
             state (Any): current system state
             observation (Any): current observation
             control (Any): current control
+            reward (float): last reward
+            done (bool): last done signal
             
         Return:
             info (dict): current info
@@ -190,7 +199,7 @@ class AbstractMDP(gym.Env):
         reward, done = self.collect_reward(self.prev_state, self.state, control)
 
         # Compute infos
-        info = self.get_info(self.prev_state, self.state, observation, control)
+        info = self.get_info(self.prev_state, self.state, observation, control, reward, done)
 
         return observation, float(reward), done, info
 

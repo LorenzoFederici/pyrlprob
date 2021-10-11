@@ -9,8 +9,8 @@ from ray import tune
 import yaml
 import os
 
-from auxiliary import *
-from callbacks import *
+from utils.auxiliary import *
+from utils.callbacks import *
 
 
 class RLProblem:
@@ -71,18 +71,13 @@ class RLProblem:
         
         #Postprocessing definition
         self.postproc = {"custom_metrics": self.custom_metrics}
-        if "prostproc" in settings:
-            self.postproc = {}
+        if "postproc" in settings:
             self.postproc["episode_step_data"] = []
             self.postproc["episode_end_data"] = []
-            if "episode_step_data" in settings["prostproc"]:
-                self.postproc["episode_step_data"] = settings["prostproc"]["episode_step_data"]
-            if "episode_step_data" in settings["prostproc"]:
-                self.postproc["episode_end_data"] = settings["prostproc"]["episode_end_data"]
-            if "plot_traj" in settings["prostproc"]:
-                self.postproc["plot_traj"] = settings["prostproc"]["plot_traj"]
-            if "plot_ctrl" in settings["prostproc"]:
-                self.postproc["plot_ctrl"] = settings["prostproc"]["plot_ctrl"]
+            if "episode_step_data" in settings["postproc"]:
+                self.postproc["episode_step_data"] = settings["postproc"]["episode_step_data"]
+            if "episode_end_data" in settings["postproc"]:
+                self.postproc["episode_end_data"] = settings["postproc"]["episode_end_data"]
         
         #Pre-trained model definition
         self.load = None
@@ -195,7 +190,7 @@ class RLProblem:
                  custom_eval_function: Optional[Union[Callable, str]]=None,
                  metrics_and_data: Optional[Dict[str, Any]]=None,
                  evaluation: bool=False, 
-                 postprocess: bool=True) -> None:
+                 postprocess: bool=True) -> str:
         """
         Evaluate a model, and find the best checkpoint
 
@@ -270,11 +265,15 @@ class RLProblem:
         
         #Postprocessing
         if postprocess:
-            self.postprocess(best_exp_dir=new_best_exp_dir, 
+            cp_dir = self.postprocess(best_exp_dir=new_best_exp_dir, 
                     checkpoint=best_cp, 
                     custom_metrics=metrics_and_data["custom_metrics"], 
                     postproc=metrics_and_data, 
                     evaluation=evaluation)
+        else:
+            cp_dir, _ = get_cp_dir_and_model(new_best_exp_dir, best_cp)
+        
+        return cp_dir
 
 
     def postprocess(self,
@@ -282,7 +281,7 @@ class RLProblem:
                     checkpoint: int,
                     custom_metrics: Optional[List[str]]=None,
                     postproc: Optional[Dict[str, Any]]=None,
-                    evaluation: bool=False) -> None:
+                    evaluation: bool=False) -> str:
         """
         Default postprocessing.
 
@@ -381,12 +380,9 @@ class RLProblem:
             f_end_data.write("\n")
         f_end_data.close()
 
-        if "plot_traj" in postproc:
-            os.system(postproc["plot_traj"] + " " + cp_dir)
-        if "plot_ctrl" in postproc:
-            os.system(postproc["plot_ctrl"] + " " + cp_dir)
+        print("\nResults printed\n")
 
-        print("\nResults printed, graphs plotted.\n")
+        return cp_dir
     
 
     def solve(self,
