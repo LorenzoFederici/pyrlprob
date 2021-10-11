@@ -2,8 +2,9 @@ import numpy as np
 import time
 from typing import *
 from itertools import islice
+import importlib
 
-import ray
+import ray.rllib.agents as agents
 from ray import tune
 
 import yaml
@@ -33,15 +34,17 @@ class RLProblem:
 
         #Trainer definition
         self.__algorithm = settings["run"]
-        self.trainer = globals()["ray.rllib.agents." + \
-            self.__algorithm + "." + self.__algorithm.upper() +  "Trainer"]
+        alg_module = importlib.import_module("ray.rllib.agents." + self.__algorithm)
+        self.trainer = getattr(alg_module, self.__algorithm.upper() + "Trainer")
 
         #Config and stopping criteria definition
         self.stop = settings["stop"]
         self.config = settings["config"]
 
         #Evironment definition
-        self.env = globals()[self.config["env"]]
+        mod_name, env_name = self.config["env"].rsplit('.',1)
+        mod = importlib.import_module(mod_name)
+        self.env = getattr(mod, env_name)
         self.config["env"] = self.env
         self.env_config = self.config["env_config"]
 

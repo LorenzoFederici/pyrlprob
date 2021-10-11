@@ -4,7 +4,7 @@ from typing import *
 import gym
 from gym import spaces
 
-from mdp import AbstractMDP
+from pyrlprob.mdp import AbstractMDP
 
 import scipy
 from scipy.integrate import solve_ivp
