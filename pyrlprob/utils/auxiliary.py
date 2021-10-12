@@ -13,10 +13,10 @@ def set_global_seeds(seed: Optional[int]=None) -> List[int]:
 
     :param seed: (int) the seed
     """
-    tf.random.set_seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
+    # tf.random.set_seed(seed)
+    # torch.manual_seed(seed)
+    # if torch.cuda.is_available():
+    #     torch.cuda.manual_seed_all(seed)
     np.random.seed(seed)
     random.seed(seed)
     if hasattr(gym.spaces, 'prng'):
@@ -42,7 +42,7 @@ def get_cp_dir_and_model(logdir: str,
     cp_dir = logdir + "checkpoint_" + str(cp).zfill(6) + "/"
     cp_model = cp_dir + "checkpoint-" + str(cp)
 
-    assert (not os.path.exists(cp_dir)), "Folder %s does not exist!." % (cp_dir)
+    assert (os.path.exists(cp_dir)), "Folder %s does not exist!." % (cp_dir)
 
     return cp_dir, cp_model
 
@@ -87,3 +87,27 @@ def column_progress(filename: str,
     column_data = list(head[column])
 
     return column_data
+
+
+def metric_training_trend(metric_name: str,
+                          experiment_dirs: List[str],
+                          last_checkpoints: List[int]) -> List[Any]:
+    """
+    Retrieve the trend of a metric during training
+
+    Args:
+        metric_name (str): full name of the metric (with the path)
+        experiment_dirs (list): list of the experiment directories
+        last_checkpoints (list): list with the last checkpoints of the experiments
+    
+    Return:
+        metric_trend (list): list with the values of the metric
+    """
+
+
+    metric_trend = []
+    for exp_num, exp_dir in enumerate(experiment_dirs):
+        metric_trend = metric_trend + column_progress(exp_dir+"progress.csv", \
+            metric_name, last_checkpoints[exp_num])
+    
+    return metric_trend

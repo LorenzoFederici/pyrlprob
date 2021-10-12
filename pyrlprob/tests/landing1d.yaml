@@ -1,18 +1,28 @@
 run: ppo
 stop:
-  training_iteration: 100
-custom_metrics: [cstr_viol]
+  training_iteration: 5
+custom_metrics:
+- cstr_viol
+metric_names:
+- $\mathcal{L}$
+- $\Delta x_f$
 postproc:
-  episode_step_data: [h, v, m, t, T]
+  episode_step_data: 
+  - h
+  - v
+  - m
+  - t
+  - T
 config:
   num_workers: 2
-  num_envs_per_worker: 5
+  num_envs_per_worker: 1
   num_gpus: 0
   num_cpus_per_worker: 1
   num_gpus_per_worker: 0
   num_cpus_for_driver: 1
-  rollout_fragment_length: 75
+  rollout_fragment_length: 15
   batch_mode: complete_episodes
+  train_batch_size: 150
   model:
     fcnet_hiddens: [64, 64]
     fcnet_activation: tanh
@@ -34,7 +44,7 @@ config:
   use_gae: True
   lambda: 1.
   kl_coeff: 0.
-  sgd_minibatch_size: 150
+  sgd_minibatch_size: 15
   shuffle_sequences: True
   num_sgd_iter: 20
   lr: 5.0e-04

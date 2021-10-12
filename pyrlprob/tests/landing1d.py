@@ -26,13 +26,16 @@ class Landing1DEnv(AbstractMDP):
         self.dt = self.tf/(float(self.H))
 
         #Observation space
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float64)
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)
 
         #Action space
-        self.action_space = spaces.Box(low=-1., high=1., dtype=np.float64)
+        self.action_space = spaces.Box(low=-1., high=1., shape=(1,), dtype=np.float32)
 
         #Reward range
         self.reward_range = (-float('inf'), 0.)
+
+        #Maximum episode steps
+        self.max_episode_steps = self.H
     
 
     def get_observation(self,
@@ -42,7 +45,7 @@ class Landing1DEnv(AbstractMDP):
         Get current observation: height and velocity
         """
 
-        observation = np.array([state["h"], state["v"], state["m"], state["t"]], dtype=np.float64)
+        observation = np.array([state["h"], state["v"], state["m"], state["t"]], dtype=np.float32)
 
         return observation
     
@@ -54,7 +57,7 @@ class Landing1DEnv(AbstractMDP):
         Get current control: thrust value
         """
 
-        control = 0.5*(action + 1.)*self.Tmax
+        control = 0.5*(action[0] + 1.)*self.Tmax
 
         return control
 
@@ -80,7 +83,9 @@ class Landing1DEnv(AbstractMDP):
         v_dot = - g + T/m
         m_dot = - T/c
 
-        s_dot = np.array([h_dot, v_dot, m_dot], dtype=np.float64)
+        s_dot = np.array([h_dot, v_dot, m_dot], dtype=np.float32)
+
+        return s_dot
 
 
     def next_state(self,
@@ -91,14 +96,14 @@ class Landing1DEnv(AbstractMDP):
         """
 
         #State at current time-step
-        s = np.array([state["h"], state["v"], state["m"]], dtype=np.float64)
+        s = np.array([state["h"], state["v"], state["m"]], dtype=np.float32)
 
         #Integration of equations of motion
         sol = solve_ivp(fun=self.dynamics, t_span=[state["t"], state["t"]+self.dt], y0=s, method='RK45', 
             args=(self.g, control, self.c), rtol=1e-6, atol=1e-6)
 
         #State at next time-step
-        s_new = {"h": sol.y[0][-1], "v": sol.y[1][-1], "m": sol.y[2][-1], "t": sol.t[-1]}
+        s_new = {"h": sol.y[0][-1], "v": sol.y[1][-1], "m": sol.y[2][-1], "t": sol.t[-1], "step": state["step"] + 1}
         
         return s_new
     
@@ -111,9 +116,11 @@ class Landing1DEnv(AbstractMDP):
         Get current reward and done signal.
         """
 
+        done = False
+
         reward = state["m"] - prev_state["m"]
 
-        if state["t"] == self.tf:
+        if state["step"] == self.H:
             done = True
         if state["h"] <= 0:
             done = True
@@ -140,15 +147,19 @@ class Landing1DEnv(AbstractMDP):
         Get current info.
         """
 
-        info = prev_state
-        info["T"] = control
-
-        if done:
-            info["h"] = [prev_state["h"], state["h"]]
-            info["v"] = [prev_state["v"], state["v"]]
-            info["m"] = [prev_state["m"], state["m"]]
-            info["t"] = [prev_state["t"], state["t"]]
-            info["T"] = [control, control]
+        info = {}
+        if not done:
+            info["episode_step_data"] = prev_state
+            info["episode_step_data"]["T"] = control
+        else:
+            info["episode_step_data"] = {}
+            info["custom_metrics"] = {}
+            info["episode_step_data"]["h"] = [prev_state["h"], state["h"]]
+            info["episode_step_data"]["v"] = [prev_state["v"], state["v"]]
+            info["episode_step_data"]["m"] = [prev_state["m"], state["m"]]
+            info["episode_step_data"]["t"] = [prev_state["t"], state["t"]]
+            info["episode_step_data"]["T"] = [control, control]
+            info["custom_metrics"]["cstr_viol"] = state["cstr_viol"]
 
         return info
     
@@ -163,16 +174,13 @@ class Landing1DEnv(AbstractMDP):
         self.state["v"] = self.v0
         self.state["m"] = self.m0
         self.state["t"] = 0.
+        self.state["step"] = 0
 
         control = 0.
 
         observation = self.get_observation(self.state, control)
 
         return observation
-
-
-    def render(self, mode='human'):
-        pass
 
 
 

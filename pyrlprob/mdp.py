@@ -8,6 +8,32 @@ from pyrlprob.utils.auxiliary import *
 class AbstractMDP(gym.Env):
     """
     Abstract Markov Decision Process, based on OpenAI Gym.
+    It encapsulates an environment (MDP) with
+    arbitrary behind-the-scenes dynamics. The MDP can be
+    partially or fully-observed. The control can differ from the returned action.
+    An epsilon-constraint law is already implemented in this class,
+    and can be called in derived classes.
+
+    The main API methods that users of this class need to know and implement are:
+        get_observation
+        get_control
+        next_state
+        collect_reward
+        get_info
+        reset
+        render (optional)
+
+    And set the following attributes:
+        action_space: the Space object corresponding to valid actions
+        observation_space: the Space object corresponding to valid observations
+        reward_range: a tuple corresponding to the min and max possible rewards (optional)
+        max_episode_steps: an int indicating the maximum number of steps in one episode
+    
+    If the user wants to use the callbacks defined in pyrlprob.utils.callbacks, the info dictionary
+    returned by get_info should contain the following keys:
+        custom_metrics: metrics to be included in tensorboard data
+        episode_step_data: data saved at each step
+        episode_end_data: data saved just at the end of the episode
     """
 
     def __init__(self, 
@@ -25,6 +51,8 @@ class AbstractMDP(gym.Env):
         for key, item in config.items():
             setattr(self, key, item)
         
+        self.max_episode_steps = 999999
+
         self.epsilon = 0.
         self.epsilon0 = 0.
         self.epsilonf = 0.
@@ -33,8 +61,6 @@ class AbstractMDP(gym.Env):
 
         if hasattr(self, 'prng_seed'):
             seeds = self.seed(self.prng_seed)
-        else:
-            seeds = self.seed()
 
 
     def seed(self,
@@ -204,6 +230,10 @@ class AbstractMDP(gym.Env):
         info = self.get_info(self.prev_state, self.state, observation, control, reward, done)
 
         return observation, float(reward), done, info
+    
+
+    def render(self, mode='human'):
+        pass
 
 
 
