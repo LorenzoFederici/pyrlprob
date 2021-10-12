@@ -1,5 +1,7 @@
 .vscode/
 __pycache__/
-tests/__pycache__/
-utils/__pycache__/
+pyrlprob/__pycache__/
+pyrlprob/tests/__pycache__/
+pyrlprob/utils/__pycache__/
+.pytest_cache/
 .DS_Store
