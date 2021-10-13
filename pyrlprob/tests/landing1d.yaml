@@ -3,13 +3,14 @@ stop:
   training_iteration: 5
 custom_metrics:
 - cstr_viol
-postproc:
+postproc_data:
   episode_step_data: 
   - h
   - v
   - m
   - t
   - T
+num_eval_episodes: 1
 config:
   num_workers: 2
   num_envs_per_worker: 1

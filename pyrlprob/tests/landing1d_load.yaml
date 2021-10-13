@@ -54,11 +54,12 @@ custom_metrics:
 - cstr_viol
 load:
   prev_exp_dirs:
-  - /home/spectral02/Documenti/Python_codes/pyrlprob/results/PPO_2021-10-13_12-51-46/PPO_Landing1DEnv_8fa71_00000_0_2021-10-13_12-51-46/
+  - /home/spectral02/Documenti/Python_codes/pyrlprob/results/PPO_2021-10-13_17-42-50/PPO_Landing1DEnv_389d5_00000_0_2021-10-13_17-42-50/
   prev_last_cps:
   - 5
-  trainer_dir: /home/spectral02/Documenti/Python_codes/pyrlprob/results/PPO_2021-10-13_12-51-46/
-postproc:
+  trainer_dir: /home/spectral02/Documenti/Python_codes/pyrlprob/results/PPO_2021-10-13_17-42-50/
+num_eval_episodes: 1
+postproc_data:
   episode_step_data:
   - h
   - v
