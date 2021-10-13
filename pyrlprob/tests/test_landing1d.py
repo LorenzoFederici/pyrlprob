@@ -3,6 +3,7 @@ from pyrlprob.tests.landing1d import Landing1DEnv
 
 import os
 import shutil
+from typing import *
 import matplotlib
 import matplotlib.pyplot as plt
 import yaml
@@ -10,12 +11,13 @@ import yaml
 from pyrlprob.utils.plots import plot_metric
 
 
-def test_landing_env():
+def test_landing_env(res_dir: Optional[str]=None) -> None:
+    """
+    Test pyrlprob main functionalities with the Landing1D environment.
 
-    #Results directory
-    res_dir = "pyrlprob/tests/results/"
-    if os.path.exists(res_dir):
-        shutil.rmtree(res_dir)
+    Args:
+        res_dir: path where results should be saved
+    """
 
     #Config file
     config = "pyrlprob/tests/landing1d.yaml"
