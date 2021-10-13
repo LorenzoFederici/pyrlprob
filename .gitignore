@@ -9,3 +9,4 @@ pyrlprob.egg-info/
 dist/
 results/
 .DS_Store
+*.sh
