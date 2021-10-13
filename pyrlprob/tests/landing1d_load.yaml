@@ -1,0 +1,70 @@
+config:
+  batch_mode: complete_episodes
+  callbacks: TrainingCallbacks
+  clip_param: 0.15
+  env: pyrlprob.tests.Landing1DEnv
+  env_config:
+    H: 15
+    Tmax: 1.227
+    c: 2.349
+    g: 1.0
+    h0: 1.0
+    hf: 0.0
+    m0: 1.0
+    tf: 1.397
+    v0: -0.783
+    vf: 0.0
+  evaluation_config:
+    env_config:
+      prng_seed: 0
+    explore: false
+  evaluation_interval: 1
+  evaluation_num_episodes: 1
+  evaluation_num_workers: 0
+  explore: true
+  framework: tf
+  gamma: 1.0
+  ignore_worker_failures: true
+  kl_coeff: 0.0
+  lambda: 1.0
+  log_level: INFO
+  lr: 0.0005
+  model:
+    fcnet_activation: tanh
+    fcnet_hiddens:
+    - 64
+    - 64
+    free_log_std: true
+    vf_share_layers: false
+  num_cpus_for_driver: 1
+  num_cpus_per_worker: 1
+  num_envs_per_worker: 1
+  num_gpus: 0
+  num_gpus_per_worker: 0
+  num_sgd_iter: 20
+  num_workers: 2
+  rollout_fragment_length: 15
+  sgd_minibatch_size: 15
+  shuffle_sequences: true
+  train_batch_size: 150
+  use_critic: true
+  use_gae: true
+  vf_loss_coeff: 0.5
+custom_metrics:
+- cstr_viol
+load:
+  prev_exp_dirs:
+  - /home/spectral02/Documenti/Python_codes/pyrlprob/pyrlprob/tests/results/PPO_2021-10-13_11-08-32/PPO_Landing1DEnv_234c3_00000_0_2021-10-13_11-08-32/
+  prev_last_cps:
+  - 5
+  trainer_dir: /home/spectral02/Documenti/Python_codes/pyrlprob/pyrlprob/tests/results/PPO_2021-10-13_11-08-32/
+postproc:
+  episode_step_data:
+  - h
+  - v
+  - m
+  - t
+  - T
+run: ppo
+stop:
+  training_iteration: 10

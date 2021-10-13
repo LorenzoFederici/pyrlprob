@@ -1,0 +1,43 @@
+{
+  "batch_mode": "complete_episodes",
+  "callbacks": "<class 'pyrlprob.utils.callbacks.EvaluationCallbacks'>",
+  "create_env_on_driver": true,
+  "env": "<class 'pyrlprob.tests.landing1d.Landing1DEnv'>",
+  "env_config": {
+    "H": 15,
+    "Tmax": 1.227,
+    "c": 2.349,
+    "g": 1.0,
+    "h0": 1.0,
+    "hf": 0.0,
+    "m0": 1.0,
+    "tf": 1.397,
+    "v0": -0.783,
+    "vf": 0.0
+  },
+  "evaluation_config": {
+    "env_config": {
+      "prng_seed": 0
+    },
+    "explore": false
+  },
+  "evaluation_interval": 1,
+  "evaluation_num_episodes": 1,
+  "evaluation_num_workers": 0,
+  "gamma": 1.0,
+  "horizon": 15,
+  "lr": 0.0,
+  "model": {
+    "fcnet_activation": "tanh",
+    "fcnet_hiddens": [
+      64,
+      64
+    ],
+    "free_log_std": true,
+    "vf_share_layers": false
+  },
+  "num_envs_per_worker": 1,
+  "num_workers": 0,
+  "sgd_minibatch_size": 15,
+  "train_batch_size": 15
+}

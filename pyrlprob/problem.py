@@ -63,11 +63,8 @@ class RLProblem:
 
         #Custom metrics
         self.custom_metrics = []
-        self.metric_names = None
         if "custom_metrics" in settings:
-            self.custom_metrics = settings["custom_metrics"]   
-        if "metric_names" in settings:
-            self.metric_names = settings["metric_names"]
+            self.custom_metrics = settings["custom_metrics"]
 
         #Callbacks and eval functions definition
         if self.config["callbacks"] != "DefaultCallbacks":
@@ -97,16 +94,10 @@ class RLProblem:
         if "load" in settings:
             self.load = {}
             self.load["logdir"] = settings["load"]["trainer_dir"]
-            prev_exp_dirs = []
-            prev_last_cps = []
-            if "prev_exp_dirs" in settings["load"]:
-                prev_exp_dirs = settings["load"]["prev_exp_dirs"]
-            if "prev_last_cp" in settings["load"]:
-                prev_last_cps = settings["load"]["prev_last_cps"]
-            self.load["exp_dirs"] = prev_exp_dirs.append(settings["load"]["last_exp_dir"])
-            self.load["last_cps"] = prev_last_cps.append(settings["load"]["checkpoint"])
+            self.load["exp_dirs"] = settings["load"]["prev_exp_dirs"]
+            self.load["last_cps"] = settings["load"]["prev_last_cps"]
             _, self.load["checkpoint_dir"] = \
-                get_cp_dir_and_model(settings["load"]["last_exp_dir"], settings["load"]["checkpoint"])
+                get_cp_dir_and_model(self.load["exp_dirs"][-1], self.load["last_cps"][-1])
     
 
     def train(self,
@@ -203,9 +194,7 @@ class RLProblem:
                  evaluation_config: Dict[str, Any],
                  custom_eval_function: Optional[Union[Callable, str]]=None,
                  metrics_and_data: Optional[Dict[str, Any]]=None,
-                 metric_names: Optional[List[str]]=None,
                  evaluation: bool=False,
-                 graphs: bool=False,
                  postprocess: bool=True) -> str:
         """
         Evaluate a model, and find the best checkpoint
@@ -224,9 +213,7 @@ class RLProblem:
             custom_eval_function (callable or str): Custom evaluation function (or function name)
             metrics_and_data (dict): dictionary containing the metrics and data to save
                 in the new file progress.csv
-            metric_names (list): list with the names of the metrics (necessary just if graphs = True)
             evaluation (bool): are metrics computed through an evaluation environment?
-            graphs (bool): whether to realize graphs of the metrics' trend along training
             postprocess (bool): whether to do postprocessing
         """
         
@@ -248,30 +235,7 @@ class RLProblem:
             metrics_and_data = {}
         for key in ["episode_step_data", "episode_end_data", "custom_metrics"]:
             if not key in metrics_and_data:
-                metrics_and_data[key] = []
-        
-        #Load metrics and realize graphs
-        if graphs:
-            for m_num, metric in enumerate(["episode_reward"] + metrics_and_data["custom_metrics"]):
-                if m_num > 0:
-                    path = "custom_metrics/"
-                else:
-                    path = ""
-                metric_trend_min = metric_training_trend(path + metric + "_min",
-                                                        exp_dirs,
-                                                        last_cps)
-                metric_trend_mean = metric_training_trend(path + metric + "_mean",
-                                                        exp_dirs,
-                                                        last_cps)
-                metric_trend_max = metric_training_trend(path + metric + "_max",
-                                                        exp_dirs,
-                                                        last_cps)
-                plot_metric(metric_mean=metric_trend_mean,
-                            out_dir=trainer_dir,
-                            metric_min=metric_trend_min,
-                            metric_max=metric_trend_max,
-                            title=metric,
-                            label=metric_names[m_num])
+                metrics_and_data[key] = []      
                     
         #Define standard PG trainer and configs for evaluation
         trainer = ray.rllib.agents.ppo.PPOTrainer
@@ -448,8 +412,7 @@ class RLProblem:
               evaluate: bool=True, 
               evaluation_num_episodes: int=1,
               postprocess: bool=True,
-              graphs: bool=False,
-              debug: bool=False) -> Tuple[str, str, str]:
+              debug: bool=False) -> Tuple[str, List[str], List[int], str]:
         """
         Solve a RL problem.
         It include pre-processing and training, 
@@ -460,12 +423,12 @@ class RLProblem:
             evaluate (bool): whether to do evaluation
             evaluation_num_episodes (int): number of evaluation episodes
             postprocess (bool): whether to do postprocessing
-            graphs (bool): whether to realize graphs of metrics' trend during training
             debug (bool): whether to print worker's logs.
         
         Return:
             trainer_dir (str): trainer directory
-            best_exp_dir (str): best experiment directory
+            exp_dirs (list): experiment directories
+            last_cps (list): last checkpoints of the experiments
             best_cp_dir (str): best checkpoint directory
         """
         
@@ -482,14 +445,15 @@ class RLProblem:
             yaml.dump(self.input_config, outfile)
         
         #Evaluation and Postprocessing
+        last_checkpoint = self.stop["training_iteration"]
+        exp_dirs = [best_exp_dir]
+        last_cps = [last_checkpoint]
+        if self.load is not None:
+            exp_dirs = self.load["exp_dirs"] + exp_dirs
+            last_cps = self.load["last_cps"] + last_cps
+        print(self.load)
+        print(exp_dirs)
         if evaluate:
-            last_checkpoint = self.stop["training_iteration"]
-            exp_dirs = [best_exp_dir]
-            last_cps = [last_checkpoint]
-            if self.load is not None:
-                exp_dirs = self.load["exp_dirs"].append(best_exp_dir)
-                last_cps = self.load["last_cps"].append(last_checkpoint)
-
             env = self.env(self.env_config)
             best_cp_dir = self.evaluate(trainer_dir=trainer_dir, 
                                         exp_dirs=exp_dirs,
@@ -503,14 +467,12 @@ class RLProblem:
                                         evaluation_config=self.evaluation_config, 
                                         custom_eval_function=self.config["custom_eval_function"], 
                                         metrics_and_data=self.postproc, 
-                                        metric_names=self.metric_names,
                                         evaluation=self.evaluation, 
-                                        postprocess=postprocess,
-                                        graphs=graphs)
+                                        postprocess=postprocess)
         else:
-            best_cp_dir = best_exp_dir
+            best_cp_dir, _ = get_cp_dir_and_model(best_exp_dir, last_checkpoint)
 
-        return trainer_dir, best_exp_dir, best_cp_dir
+        return trainer_dir, exp_dirs, last_cps, best_cp_dir
 
 
 

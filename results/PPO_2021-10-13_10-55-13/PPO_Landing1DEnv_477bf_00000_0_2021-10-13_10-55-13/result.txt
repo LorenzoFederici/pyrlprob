@@ -1,0 +1,2 @@
+    # elapsed time [s]     training_iteration    episode_reward_mean     episode_reward_max     episode_reward_min
+             7.3786952                      5             -8.8501318             -1.9409995            -13.5658428

@@ -3,9 +3,6 @@ stop:
   training_iteration: 5
 custom_metrics:
 - cstr_viol
-metric_names:
-- $\mathcal{L}$
-- $\Delta x_f$
 postproc:
   episode_step_data: 
   - h
