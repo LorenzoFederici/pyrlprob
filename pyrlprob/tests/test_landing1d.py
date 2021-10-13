@@ -1,8 +1,6 @@
 from pyrlprob.problem import RLProblem
 from pyrlprob.tests.landing1d import Landing1DEnv
 
-import os
-import shutil
 from typing import *
 import matplotlib
 import matplotlib.pyplot as plt
