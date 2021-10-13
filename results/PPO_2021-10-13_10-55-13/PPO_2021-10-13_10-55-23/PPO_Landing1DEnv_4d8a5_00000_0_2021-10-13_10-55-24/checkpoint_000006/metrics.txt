@@ -1,2 +1,0 @@
-        # checkpoint   episode_reward_min  episode_reward_mean   episode_reward_max        cstr_viol_min       cstr_viol_mean        cstr_viol_max 
-                   6           -2.3431886           -2.3431886           -2.3431886            0.1740507            0.1740507            0.1740507 
