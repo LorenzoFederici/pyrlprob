@@ -5,4 +5,6 @@ pyrlprob/tests/__pycache__/
 pyrlprob/tests/results/
 pyrlprob/utils/__pycache__/
 .pytest_cache/
+pyrlprob.egg-info/
+dist/
 .DS_Store

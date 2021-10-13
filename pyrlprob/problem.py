@@ -451,8 +451,6 @@ class RLProblem:
         if self.load is not None:
             exp_dirs = self.load["exp_dirs"] + exp_dirs
             last_cps = self.load["last_cps"] + last_cps
-        print(self.load)
-        print(exp_dirs)
         if evaluate:
             env = self.env(self.env_config)
             best_cp_dir = self.evaluate(trainer_dir=trainer_dir, 
