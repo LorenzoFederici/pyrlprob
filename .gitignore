@@ -3,6 +3,7 @@ __pycache__/
 pyrlprob/__pycache__/
 pyrlprob/tests/__pycache__/
 pyrlprob/tests/results/
+pyrlprob/tests/landing1d_load.yaml
 pyrlprob/utils/__pycache__/
 .pytest_cache/
 pyrlprob.egg-info/
