@@ -7,4 +7,5 @@ pyrlprob/utils/__pycache__/
 .pytest_cache/
 pyrlprob.egg-info/
 dist/
+results/
 .DS_Store
