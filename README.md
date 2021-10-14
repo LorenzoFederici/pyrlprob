@@ -1,6 +1,6 @@
 <div align="center"> <h1><b> pyRLprob </b></div>
 
-<center>
+<div align="center">
 
 ![GitHub Repo stars](https://img.shields.io/github/stars/LorenzoFederici/pyrlprob?style=social)
 ![GitHub last commit](https://img.shields.io/github/last-commit/LorenzoFederici/pyrlprob)
@@ -8,7 +8,7 @@
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/LorenzoFederici/pyrlprob)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pyrlprob)
 
-</center>
+</div>
 
 pyRLprob is a Python library for easy training, evaluation, and postprocessing of [OpenAI-Gym](https://gym.openai.com/) environments through [Ray-RLlib](https://docs.ray.io/en/master/rllib.html) Reinforcement Learning library.
 
