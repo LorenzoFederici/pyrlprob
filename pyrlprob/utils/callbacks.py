@@ -84,17 +84,18 @@ class EvaluationCallbacks(DefaultCallbacks):
         if info is not None:
             if "episode_step_data" in info:
                 for key, item in info["episode_step_data"].items():
+                    assert(isinstance(item,list)), "episode_step_data must be lists!"
                     if not done:
                         if episode.length == 1:
-                            episode.user_data[key] = [item]
+                            episode.user_data[key] = [item[-1]]
                         else:
-                            episode.user_data[key].append(item)
+                            episode.user_data[key].append(item[-1])
                     else:
                         if episode.length == 1:
-                            episode.user_data[key] = [item[0], item[1]]
+                            episode.user_data[key] = [item[-2], item[-1]]
                         else:
-                            episode.user_data[key].append(item[0])
-                            episode.user_data[key].append(item[1])
+                            episode.user_data[key].append(item[-2])
+                            episode.user_data[key].append(item[-1])
     
 
     def on_episode_end(self, 

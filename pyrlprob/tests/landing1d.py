@@ -148,17 +148,19 @@ class Landing1DEnv(AbstractMDP):
         """
 
         info = {}
-        if not done:
-            info["episode_step_data"] = prev_state
-            info["episode_step_data"]["T"] = control
-        else:
-            info["episode_step_data"] = {}
+        info["episode_step_data"] = {}
+        info["episode_step_data"]["h"] = [prev_state["h"]] 
+        info["episode_step_data"]["v"] = [prev_state["v"]] 
+        info["episode_step_data"]["m"] = [prev_state["m"]] 
+        info["episode_step_data"]["t"] = [prev_state["t"]] 
+        info["episode_step_data"]["T"] = [control]
+        if done:
             info["custom_metrics"] = {}
-            info["episode_step_data"]["h"] = [prev_state["h"], state["h"]]
-            info["episode_step_data"]["v"] = [prev_state["v"], state["v"]]
-            info["episode_step_data"]["m"] = [prev_state["m"], state["m"]]
-            info["episode_step_data"]["t"] = [prev_state["t"], state["t"]]
-            info["episode_step_data"]["T"] = [control, control]
+            info["episode_step_data"]["h"].append(state["h"]) 
+            info["episode_step_data"]["v"].append(state["v"]) 
+            info["episode_step_data"]["m"].append(state["m"]) 
+            info["episode_step_data"]["t"].append(state["t"]) 
+            info["episode_step_data"]["T"].append(control)
             info["custom_metrics"]["cstr_viol"] = state["cstr_viol"]
 
         return info
