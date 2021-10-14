@@ -84,7 +84,7 @@ class EvaluationCallbacks(DefaultCallbacks):
         if info is not None:
             if "episode_step_data" in info:
                 for key, item in info["episode_step_data"].items():
-                    assert(isinstance(item,list)), "episode_step_data must be lists!"
+                    assert(isinstance(item,list)), "episode_step_data items must be lists!"
                     if not done:
                         if episode.length == 1:
                             episode.user_data[key] = [item[-1]]

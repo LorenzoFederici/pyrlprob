@@ -228,7 +228,7 @@ def postprocessing(best_exp_dir: str,
     #Get checkpoint directory
     cp_dir, _ = get_cp_dir_and_model(best_exp_dir, checkpoint)
 
-    #Path of metrics
+    #Path of metrics and data
     metric_path = ""
     if is_evaluation_env:
         metric_path = "evaluation/"
@@ -239,7 +239,7 @@ def postprocessing(best_exp_dir: str,
         metrics_and_data["episode_step_data"] = []
         metrics_and_data["episode_end_data"] = []
 
-    #Metrics to log
+    #Metrics and data to log
     values = ["min", "mean", "max"]
     metrics = {
         "metrics": {"episode_reward": {value: 0. for value in values}},
@@ -251,7 +251,7 @@ def postprocessing(best_exp_dir: str,
             for metric in metrics_and_data["custom_metrics"] + metrics_and_data["episode_end_data"]}
         }
 
-    #Save metrics of the best checkpoint
+    #Create output files
     f_log = open(cp_dir + "metrics.txt", "w") # open file
     f_end_data = open(cp_dir + "episode_end_data.txt", "w") # open file
     f_step_data = open(cp_dir + "episode_step_data.txt", "w") # open file
@@ -271,21 +271,29 @@ def postprocessing(best_exp_dir: str,
     f_end_data.write("\n")
     f_log.write("%20d " % (checkpoint))
 
+    #Episode lengths
+    ep_length = column_progress(best_exp_dir+"progress.csv", \
+                        metric_path + "hist_stats/episode_lengths")
+    ep_length = ep_length[0].strip("[").strip("]").split(", ")
+    ep_length = np.array(ep_length, dtype=int)
+
+    #Retrieve metrics and data from progress.csv
     for key, item in metrics.items():
         for key_in in item.keys():
             if "episode" in key:
                 q = column_progress(best_exp_dir+"progress.csv", metric_path + "hist_stats/" + key_in)
                 q = q[0].strip("[").strip("]").split(", ")
                 if key == "episode_step_data":
-                    ep_length = column_progress(best_exp_dir+"progress.csv", \
-                        metric_path + "hist_stats/episode_lengths")
-                    ep_length = ep_length[0].strip("[").strip("]").split(", ")
-                    ep_length = np.array(ep_length, dtype=int)
-                    metrics[key][key_in] = [list(islice(q, i)) for i in ep_length]
+                    start = 0
+                    stop = 0
+                    for e_num, e in enumerate(ep_length):
+                        stop = stop + (e+1)
+                        metrics[key][key_in].append(q[start:stop])
+                        start = start + (e+1)
                 else:
                     metrics[key][key_in] = q
             else:
-                if "custom" in key:
+                if key == "custom_metrics":
                     metric_type = "custom_metrics/"
                 else:
                     metric_type = ""
@@ -296,14 +304,16 @@ def postprocessing(best_exp_dir: str,
     f_log.write("\n")
     f_log.close()
 
+    #Print episode_step_data
     for e_num, e in enumerate(ep_length):
-        for h in range(e):
+        for h in range(e+1):
             for key_in in metrics["episode_step_data"].keys():
                 f_step_data.write("%20s " % (metrics["episode_step_data"][key_in][e_num][h]))
             f_step_data.write("\n")
         f_step_data.write("\n\n")
     f_step_data.close()
 
+    #Print episode_end_data
     for e_num, _ in enumerate(ep_length):
         for key_in in metrics["episode_end_data"].keys():
             f_end_data.write("%20s " % (metrics["episode_end_data"][key_in][e_num]))

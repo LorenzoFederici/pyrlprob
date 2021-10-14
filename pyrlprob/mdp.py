@@ -213,11 +213,13 @@ class AbstractMDP(gym.Env):
         # Invalid action
         assert self.action_space.contains(action), "%r (%s) invalid"%(action, type(action))
 
+        # Previous state
+        self.prev_state = self.state
+
         # Get control
-        control = self.get_control(action, self.state)
+        control = self.get_control(action, self.prev_state)
 
         # Next state
-        self.prev_state = self.state
         self.state = self.next_state(self.prev_state, control)
 
         # Get observation
