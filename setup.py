@@ -32,6 +32,7 @@ setup(name='pyrlprob',
         'opencv-python',
         'tabulate',
         'tensorflow',
+        'tensorboardx',
         'torch',
         'typing',
         'PyYAML'
