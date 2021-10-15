@@ -11,6 +11,9 @@ postproc_data:
   - t
   - T
 num_eval_episodes: 1
+eval_env_config:
+  env_config:
+    prng_seed: 0
 config:
   num_workers: 2
   num_envs_per_worker: 1
@@ -35,8 +38,6 @@ config:
   evaluation_num_episodes: 1
   evaluation_config:
     explore: False
-    env_config:
-      prng_seed: 0
   evaluation_num_workers: 0
   use_critic: True
   use_gae: True

@@ -4,6 +4,7 @@ import importlib
 import yaml
 
 from pyrlprob.base_funs import *
+from pyrlprob.utils import update
 
 
 class RLProblem:
@@ -35,7 +36,7 @@ class RLProblem:
 
         #Config definition
         self.config = alg_module.DEFAULT_CONFIG.copy()
-        self.config.update(settings["config"])
+        update(self.config, settings["config"])
 
         #Evironment definition
         mod_name, env_name = self.config["env"].rsplit('.',1)
@@ -59,6 +60,10 @@ class RLProblem:
         self.num_eval_episodes = 1
         if "num_eval_episodes" in settings:
             self.num_eval_episodes = settings["num_eval_episodes"]
+        self.eval_env_config = {}
+        if "eval_env_config" in settings:
+            self.eval_env_config = settings["eval_env_config"]
+        update(self.evaluation_config, self.eval_env_config)
 
         #Custom metrics
         self.custom_metrics = []
