@@ -34,7 +34,7 @@ If the code exits without errors, a folder named `results/` with the test result
 
 ## Credits
 pyRLprob has been created by [Lorenzo Federici](https://github.com/LorenzoFederici) in 2021.
-For any problem, doubt, clarification or suggestion, you can the author at [lorenzo.federici@uniroma1.it](mailto:lorenzo.federici@uniroma1.it).
+For any problem, clarification or suggestion, you can contact the author at [lorenzo.federici@uniroma1.it](mailto:lorenzo.federici@uniroma1.it).
 
 ## License
 The package is under the [MIT](https://choosealicense.com/licenses/mit/) license.
