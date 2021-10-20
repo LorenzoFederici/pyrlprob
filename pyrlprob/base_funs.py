@@ -136,13 +136,22 @@ def evaluation(trainer_dir: str,
     if is_evaluation_env:
         metric_path = "evaluation/"
 
-    #Determine the best checkpoint
-    episode_reward = metric_training_trend(metric_path + "episode_reward_mean",
-                                           exp_dirs,
-                                           last_cps)
-    best_cp = np.argmax(episode_reward)+1
-    best_exp = next(exp for exp, cp in enumerate(last_cps) if cp >= best_cp)
-    best_exp_dir = exp_dirs[best_exp]
+    if trainer_dir is not None:
+        #Determine the best checkpoint
+        episode_reward = metric_training_trend(metric_path + "episode_reward_mean",
+                                            exp_dirs,
+                                            last_cps)
+        best_cp = np.argmax(episode_reward)+1
+        best_exp = next(exp for exp, cp in enumerate(last_cps) if cp >= best_cp)
+        best_exp_dir = exp_dirs[best_exp]
+
+        #Define load properties
+        load = {}
+        load["logdir"] = trainer_dir
+        _, load["checkpoint_dir"] = \
+            get_cp_dir_and_model(best_exp_dir, best_cp)
+    else:
+        load = {}
 
     #Check what metrics/data are defined
     if metrics_and_data is None:
@@ -184,12 +193,6 @@ def evaluation(trainer_dir: str,
             config["custom_eval_function"] = getattr(mod, fun_name)
     config["callbacks"] = callbacks.EvaluationCallbacks
     stop = {"training_iteration": 1}
-
-    #Define load properties
-    load = {}
-    load["logdir"] = trainer_dir
-    _, load["checkpoint_dir"] = \
-        get_cp_dir_and_model(best_exp_dir, best_cp)
 
 
     #Evaluation

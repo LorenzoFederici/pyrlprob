@@ -153,9 +153,9 @@ class RLProblem:
 
 
     def evaluate(self,
-                 trainer_dir: str,
-                 exp_dir: str,
-                 last_checkpoint: int,
+                 trainer_dir: Optional[str] = None,
+                 exp_dir: Optional[str] = None,
+                 last_checkpoint: Optional[int] = None,
                  do_postprocess: Optional[bool] = True) -> Tuple[List[str], List[int], str]:
         """
         Evaluate current model.
