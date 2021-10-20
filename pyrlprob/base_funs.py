@@ -151,7 +151,7 @@ def evaluation(trainer_dir: str,
         _, load["checkpoint_dir"] = \
             get_cp_dir_and_model(best_exp_dir, best_cp)
     else:
-        load = {}
+        load = None
 
     #Check what metrics/data are defined
     if metrics_and_data is None:
