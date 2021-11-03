@@ -5,6 +5,7 @@ from typing import *
 import matplotlib
 import matplotlib.pyplot as plt
 import yaml
+import os
 
 from pyrlprob.utils.plots import plot_metric
 
@@ -18,7 +19,8 @@ def test_landing_env(res_dir: Optional[str]=None) -> None:
     """
 
     #Config file
-    config = "pyrlprob/tests/landing1d.yaml"
+    __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+    config = os.path.join(__location__, "landing1d.yaml")
 
     #Problem definition
     LandingProblem = RLProblem(config)
@@ -35,11 +37,11 @@ def test_landing_env(res_dir: Optional[str]=None) -> None:
             "prev_last_cps": last_cps}}
     stop = {"stop": {"training_iteration": 2*last_cps[-1]}}
     config_new_dict = {**LandingProblem.input_config, **stop, **load}
-    with open("pyrlprob/tests/landing1d_load.yaml", 'w') as outfile:
+    with open(os.path.join(__location__, "landing1d_load.yaml"), 'w') as outfile:
         yaml.dump(config_new_dict, outfile)
     
     #Training, evaluation and postprocessing of pre-trained model
-    config_new = "pyrlprob/tests/landing1d_load.yaml"
+    config_new = os.path.join(__location__, "landing1d_load.yaml")
     LandingProblemPretrained = RLProblem(config_new)
     trainer_dir, exp_dirs, last_cps, _ = \
         LandingProblemPretrained.solve()
