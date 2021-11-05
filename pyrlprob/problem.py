@@ -41,8 +41,9 @@ class RLProblem:
         #Evironment definition
         mod_name, env_name = self.config["env"].rsplit('.',1)
         mod = importlib.import_module(mod_name)
-        self.env = getattr(mod, env_name)
-        self.config["env"] = self.env
+        env = getattr(mod, env_name)
+        tune.register_env(self.config["env"], lambda config: env(config))
+        self.env = self.config["env"]
         self.env_config = self.config["env_config"]
 
         #Model and gamma definition
@@ -173,14 +174,12 @@ class RLProblem:
         if self.load is not None:
             exp_dirs = self.load["exp_dirs"] + exp_dirs
             last_cps = self.load["last_cps"] + last_cps
-        env = self.env(self.env_config)
         best_cp_dir = evaluation(trainer_dir=trainer_dir, 
                                  exp_dirs=exp_dirs,
                                  last_cps=last_cps,
                                  model=self.model,
                                  gamma=self.gamma,
-                                 max_ep_length=env.max_episode_steps, 
-                                 env=self.env, 
+                                 env_name=self.env, 
                                  env_config=self.env_config,
                                  evaluation_num_episodes=self.num_eval_episodes,
                                  evaluation_config=self.evaluation_config, 

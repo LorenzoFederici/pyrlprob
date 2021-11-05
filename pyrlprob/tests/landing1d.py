@@ -4,6 +4,9 @@ from typing import *
 import gym
 from gym import spaces
 
+import ray
+from ray.tune.registry import register_env
+
 from pyrlprob.mdp import AbstractMDP
 
 import scipy

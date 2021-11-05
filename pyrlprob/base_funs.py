@@ -101,8 +101,7 @@ def evaluation(trainer_dir: str,
                last_cps: List[int],
                model: Dict[str, Any],
                gamma: float,
-               max_ep_length: int, 
-               env: Union[Callable, str], 
+               env_name: str, 
                env_config: Dict[str, Any],
                evaluation_num_episodes: int, 
                evaluation_config: Dict[str, Any],
@@ -119,8 +118,7 @@ def evaluation(trainer_dir: str,
         last_cps (list): list with last checkpoint number of each experiment in exp_dirs
         model (dict): dict with current model configs
         gamma (float): disconut factor
-        max_ep_length (int): maximum episode length
-        env (callable or str): Environment class (or class name)
+        env_name (str): environment class name
         env_config (dict): dictionary containing the environment configs
         evaluation_num_episodes (int): number of evaluation episodes
         evaluation_config (dict): dictionary containing the evaluation configs
@@ -163,23 +161,32 @@ def evaluation(trainer_dir: str,
     #Define standard PG trainer and configs for evaluation
     trainer = ray.rllib.agents.ppo.PPOTrainer
     config = {}
+
+    # env config
+    config["env"] = env_name
+    mod_name, fun_name = env_name.rsplit('.',1)
+    mod = importlib.import_module(mod_name)
+    env = getattr(mod, fun_name)
+    tune.register_env(config["env"], lambda config: env(config))
+    config["env_config"] = env_config
+    env_inst = env(env_config)
+
+    # general config
     config["num_workers"] = 0
     config["num_envs_per_worker"] = 1
     config["create_env_on_driver"] = True
     config["model"] = model
     config["gamma"] = gamma
     config["batch_mode"] = "complete_episodes"
-    config["horizon"] = max_ep_length
-    config["train_batch_size"] = max_ep_length
-    config["sgd_minibatch_size"] = max_ep_length
+    config["train_batch_size"] = env_inst.max_episode_steps
+    config["rollout_fragment_length"] = env_inst.max_episode_steps
+
+    # ppo config
+    config["num_sgd_iter"] = 1
+    config["sgd_minibatch_size"] = env_inst.max_episode_steps
     config["lr"] = 0.
-    if callable(env):
-        config["env"] = env
-    else:
-        mod_name, fun_name = env.rsplit('.',1)
-        mod = importlib.import_module(mod_name)
-        config["env"] = getattr(mod, fun_name)
-    config["env_config"] = env_config
+    
+    # evaluation and callbacks config
     config["evaluation_interval"] = 1
     config["evaluation_num_episodes"] = evaluation_num_episodes
     config["evaluation_num_workers"] = 0

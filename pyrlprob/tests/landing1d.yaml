@@ -51,7 +51,7 @@ config:
   clip_param: 0.15
   callbacks:
     TrainingCallbacks
-  env: pyrlprob.tests.Landing1DEnv
+  env: pyrlprob.tests.landing1d.Landing1DEnv
   env_config:
     H: 15
     h0: 1.0
