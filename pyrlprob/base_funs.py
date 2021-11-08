@@ -108,7 +108,8 @@ def evaluation(trainer_dir: str,
                custom_eval_function: Optional[Union[Callable, str]]=None,
                metrics_and_data: Optional[Dict[str, Any]]=None,
                is_evaluation_env: bool=False,
-               do_postprocess: bool=True) -> str:
+               do_postprocess: bool=True,
+               debug: bool=False) -> str:
     """
     Evaluate a model, and find the best checkpoint
 
@@ -127,6 +128,7 @@ def evaluation(trainer_dir: str,
             in the new file progress.csv
         is_evaluation_env (bool): are metrics computed through an evaluation environment?
         do_postprocess (bool): whether to do postprocessing
+        debug (bool):  whether to print data fro debugging
     """
     
     #Path of metrics
@@ -206,7 +208,8 @@ def evaluation(trainer_dir: str,
     _, new_best_exp_dir, last_checkpoint  = training(trainer=trainer, 
                                                      config=config,
                                                      stop=stop,
-                                                     load=load)
+                                                     load=load,
+                                                     debug=debug)
     
     #Postprocessing
     if do_postprocess:

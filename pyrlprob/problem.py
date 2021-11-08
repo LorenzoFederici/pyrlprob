@@ -138,10 +138,11 @@ class RLProblem:
         
         #Evaluation and Postprocessing
         if evaluate:
-            exp_dirs, last_cps, best_cp_dir = self.evaluate(trainer_dir,
-                                                            best_exp_dir,
-                                                            last_checkpoint,
-                                                            postprocess)
+            exp_dirs, last_cps, best_cp_dir = self.evaluate(trainer_dir=trainer_dir,
+                                                            best_exp_dir=best_exp_dir,
+                                                            last_checkpoint=last_checkpoint,
+                                                            do_postprocess=postprocess,
+                                                            debug=debug)
         else:
             exp_dirs = [best_exp_dir]
             last_cps = [last_checkpoint]
@@ -157,7 +158,8 @@ class RLProblem:
                  trainer_dir: Optional[str] = None,
                  exp_dir: Optional[str] = None,
                  last_checkpoint: Optional[int] = None,
-                 do_postprocess: Optional[bool] = True) -> Tuple[List[str], List[int], str]:
+                 do_postprocess: Optional[bool] = True,
+                 debug: bool = False) -> Tuple[List[str], List[int], str]:
         """
         Evaluate current model.
         It may include postprocessing.
@@ -167,6 +169,7 @@ class RLProblem:
             exp_dir (str): experiment directory
             last_checkpoint (int): last checkpoint of the experiment
             do_postprocess (bool): whether to do postprocessing
+            debug (bool): is debugging mode on?
         """
 
         exp_dirs = [exp_dir]
@@ -186,7 +189,8 @@ class RLProblem:
                                  custom_eval_function=self.custom_eval_function, 
                                  metrics_and_data=self.postproc_data, 
                                  is_evaluation_env=self.evaluation, 
-                                 do_postprocess=do_postprocess)
+                                 do_postprocess=do_postprocess,
+                                 debug=debug)
         
         return exp_dirs, last_cps, best_cp_dir
     
@@ -211,22 +215,3 @@ class RLProblem:
                                 is_evaluation_env=self.evaluation)
         
         return cp_dir
-
-
-
-
-
-
-
-
-
-    
-    
-
-
-
-    
-
-
-
-
