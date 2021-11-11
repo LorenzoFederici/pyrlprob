@@ -143,7 +143,7 @@ class RLProblem:
         #Evaluation and Postprocessing
         if evaluate:
             exp_dirs, last_cps, best_cp_dir = self.evaluate(trainer_dir=trainer_dir,
-                                                            best_exp_dir=best_exp_dir,
+                                                            exp_dir=best_exp_dir,
                                                             last_checkpoint=last_checkpoint,
                                                             do_postprocess=postprocess,
                                                             debug=debug)
