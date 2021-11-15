@@ -2,6 +2,7 @@ import numpy as np
 from typing import *
 import importlib
 import yaml
+import copy
 
 from pyrlprob.base_funs import *
 from pyrlprob.utils import update
@@ -52,7 +53,7 @@ class RLProblem:
 
         #Evaluation config definition
         self.evaluation = bool(self.config["evaluation_interval"])
-        self.evaluation_config = self.config["evaluation_config"]
+        self.evaluation_config = copy.deepcopy(self.config["evaluation_config"])
         if self.config["custom_eval_function"] is not None:
             mod_name, fun_name = self.config["custom_eval_function"].rsplit('.',1)
             mod = importlib.import_module(mod_name)
