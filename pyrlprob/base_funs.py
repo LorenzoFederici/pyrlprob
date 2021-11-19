@@ -185,7 +185,7 @@ def evaluation(trainer_dir: str,
 
     # ppo config
     config["num_sgd_iter"] = 1
-    config["sgd_minibatch_size"] = env_inst.max_episode_steps
+    config["sgd_minibatch_size"] = 1
     config["lr"] = 0.
     
     # evaluation and callbacks config
