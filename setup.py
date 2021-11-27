@@ -5,7 +5,7 @@ this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
 setup(name='pyrlprob',
-    version='1.3.5',
+    version='1.3.6',
     author='Lorenzo Federici',
     author_email = 'federicilorenzo94@gmail.com',
     description = 'Train easily OpenAI-Gym environments through Ray-RLlib',
@@ -25,7 +25,7 @@ setup(name='pyrlprob',
         'numpy',
         'pandas',
         'pytest',
-        'ray==1.6.0',
+        'ray',
         'scipy',
         'scikit-image',
         'opencv-python',
