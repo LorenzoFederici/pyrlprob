@@ -29,15 +29,22 @@ def plot_metric(metric_name: str,
     """
 
     #Retrieve metric min, mean and max trend
-    metric_min = metric_training_trend(metric_name + "_min",
-                                       experiment_dirs,
-                                       last_checkpoints)
-    metric_mean = metric_training_trend(metric_name + "_mean",
+    if "_mean" in metric_name:
+        metric_mean = metric_training_trend(metric_name,
                                         experiment_dirs,
                                         last_checkpoints)
-    metric_max = metric_training_trend(metric_name + "_max",
-                                       experiment_dirs,
-                                       last_checkpoints)
+        metric_min = None
+        metric_max = None
+    else:
+        metric_min = metric_training_trend(metric_name + "_min",
+                                        experiment_dirs,
+                                        last_checkpoints)
+        metric_mean = metric_training_trend(metric_name + "_mean",
+                                            experiment_dirs,
+                                            last_checkpoints)
+        metric_max = metric_training_trend(metric_name + "_max",
+                                        experiment_dirs,
+                                        last_checkpoints)
 
     #Training iterations
     training_iter = [i for i in range(len(metric_mean))]
@@ -45,7 +52,7 @@ def plot_metric(metric_name: str,
     #Evaluate the moving average
     metric_mean_mov = moving_average(metric_mean, window=window)
     training_iter_mov = training_iter[len(training_iter) - len(metric_mean_mov):]
-    if metric_min is not None:
+    if metric_min != None:
         metric_min_mov = moving_average(metric_min, window=window)
         metric_max_mov = moving_average(metric_max, window=window)
         metric_std_min_mov = np.array(metric_mean_mov) - abs(np.array(metric_mean_mov) - np.array(metric_min_mov))/4.
@@ -57,7 +64,7 @@ def plot_metric(metric_name: str,
         fig.set_size_inches(9.7,6.4)
     ax = fig.gca()
     ax.plot(training_iter_mov, metric_mean_mov, '-', linewidth='2.5', color=color, label=label)
-    if metric_min is not None:
+    if metric_min !=  None:
         plt.fill_between(training_iter_mov, metric_std_min_mov, metric_std_max_mov, alpha=0.3, color=color)
     
     return fig
