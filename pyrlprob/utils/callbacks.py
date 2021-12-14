@@ -39,7 +39,7 @@ class epsConstraintCallbacks(TrainingCallbacks):
     constraint satisfaction tolerance during training
     """
 
-    def on_train_results(self, 
+    def on_train_result(self, 
                          *, 
                          trainer, 
                          result: dict, 
