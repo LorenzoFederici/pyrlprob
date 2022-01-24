@@ -54,8 +54,10 @@ config:
   env: pyrlprob.tests.landing1d.Landing1DEnv
   env_config:
     H: 15
-    h0: 1.0
-    v0: -0.783
+    h0_min: 0.8
+    h0_max: 1.2
+    v0_min: -0.85
+    v0_max: -0.75
     m0: 1.0
     tf: 1.397
     hf: 0.0

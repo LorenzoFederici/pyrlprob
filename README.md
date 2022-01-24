@@ -20,14 +20,15 @@ Use the package manager [pip](https://pip.pypa.io/en/stable/) to install the lat
 pip install pyrlprob
 ```
 
-To test if the package is installed correctly, run the following test (one-dimensional landing problem):
+To test if the package is installed correctly, run the following tests (one-dimensional landing problem):
 
 
 ```python
 import pyrlprob
-from pyrlprob.tests import test
+from pyrlprob.tests import test_train, test_train_eval
 
-test()
+test_train()
+test_train_eval()
 ```
 
 If the code exits without errors, a folder named `results/` with the test results will be created in your current directory.

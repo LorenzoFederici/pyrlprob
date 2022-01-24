@@ -10,7 +10,38 @@ import os
 from pyrlprob.utils.plots import plot_metric
 
 
-def test_landing_env(res_dir: Optional[str]=None) -> None:
+def test_landing_env_train(res_dir: Optional[str]=None) -> None:
+    """
+    Test pyrlprob main functionalities with the Landing1D environment.
+
+    Args:
+        res_dir: path where results are saved
+    """
+
+    #Config file
+    __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+    config = os.path.join(__location__, "landing1d.yaml")
+
+    #Problem definition
+    LandingProblem = RLProblem(config)
+
+    #Training
+    trainer_dir, exp_dirs, last_cps, _ = \
+        LandingProblem.solve(res_dir, 
+                             evaluate=False, 
+                             postprocess=False)
+
+    #Plot of metric trend
+    plt.style.use("seaborn")
+    fig = plot_metric("episode_reward",
+                      exp_dirs,
+                      last_cps)
+    plt.xlabel('training iteration', fontsize=20)
+    plt.ylabel('episode reward', fontsize=20)
+    fig.savefig(trainer_dir + "episode_reward.png")
+
+
+def test_landing_env_train_eval(res_dir: Optional[str]=None) -> None:
     """
     Test pyrlprob main functionalities with the Landing1D environment.
 

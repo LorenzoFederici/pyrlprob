@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.random import uniform
 from typing import *
 
 import gym
@@ -175,8 +176,8 @@ class Landing1DEnv(AbstractMDP):
         """
 
         self.state = {}
-        self.state["h"] = self.h0
-        self.state["v"] = self.v0
+        self.state["h"] = uniform(self.h0_min, self.h0_max)
+        self.state["v"] = uniform(self.v0_min, self.v0_max)
         self.state["m"] = self.m0
         self.state["t"] = 0.
         self.state["step"] = 0
