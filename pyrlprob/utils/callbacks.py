@@ -1,4 +1,5 @@
 from typing import *
+from collections.abc import Iterable
 
 import ray
 from ray.rllib.agents.callbacks import DefaultCallbacks
@@ -79,23 +80,20 @@ class EvaluationCallbacks(DefaultCallbacks):
 
         #Info and done returned by the episode
         info = episode.last_info_for()
-        done = episode.last_done_for()
 
         if info is not None:
             if "episode_step_data" in info:
                 for key, item in info["episode_step_data"].items():
-                    assert(isinstance(item,list)), "episode_step_data items must be lists!"
-                    if not done:
+                    if isinstance(item, Iterable):
                         if episode.length == 1:
-                            episode.user_data[key] = [item[-1]]
+                            episode.user_data[key] = list(item)
                         else:
-                            episode.user_data[key].append(item[-1])
+                            episode.user_data[key] = episode.user_data[key] + list(item)
                     else:
                         if episode.length == 1:
-                            episode.user_data[key] = [item[-2], item[-1]]
+                            episode.user_data[key] = [item]
                         else:
-                            episode.user_data[key].append(item[-2])
-                            episode.user_data[key].append(item[-1])
+                            episode.user_data[key].append(item)
     
 
     def on_episode_end(self, 

@@ -15,7 +15,7 @@ def test_landing_env(res_dir: Optional[str]=None) -> None:
     Test pyrlprob main functionalities with the Landing1D environment.
 
     Args:
-        res_dir: path where results should be saved
+        res_dir: path where results are saved
     """
 
     #Config file
