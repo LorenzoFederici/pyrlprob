@@ -12,10 +12,10 @@ from pyrlprob.utils.plots import plot_metric
 
 def test_landing_env_train(res_dir: Optional[str]=None) -> None:
     """
-    Test pyrlprob main functionalities with the Landing1D environment.
+    Test pyrlprob training functionalities in the Landing1D environment.
 
     Args:
-        res_dir: path where results are saved
+        res_dir: path where results are saved. Current directory if not specified.
     """
 
     #Config file
@@ -43,10 +43,11 @@ def test_landing_env_train(res_dir: Optional[str]=None) -> None:
 
 def test_landing_env_train_eval(res_dir: Optional[str]=None) -> None:
     """
-    Test pyrlprob main functionalities with the Landing1D environment.
+    Test pyrlprob training, evaluation and post-processing functionalities 
+        in the Landing1D environment.
 
     Args:
-        res_dir: path where results are saved
+        res_dir: path where results are saved. Current directory if not specified.
     """
 
     #Config file

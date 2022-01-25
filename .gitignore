@@ -9,5 +9,6 @@ pyrlprob/utils/__pycache__/
 pyrlprob.egg-info/
 dist/
 results/
+test_gym.py
 .DS_Store
 *.sh

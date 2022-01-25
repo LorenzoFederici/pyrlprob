@@ -1,1 +1,2 @@
 include pyrlprob/tests/*.yaml
+include pyrlprob/tests/tuned_examples/*.yaml

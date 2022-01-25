@@ -40,10 +40,11 @@ class RLProblem:
         update(self.config, settings["config"])
 
         #Evironment definition
-        mod_name, env_name = self.config["env"].rsplit('.',1)
-        mod = importlib.import_module(mod_name)
-        env = getattr(mod, env_name)
-        tune.register_env(self.config["env"], lambda config: env(config))
+        if "." in self.config["env"]:
+            mod_name, env_name = self.config["env"].rsplit('.',1)
+            mod = importlib.import_module(mod_name)
+            env = getattr(mod, env_name)
+            tune.register_env(self.config["env"], lambda config: env(config))
         self.env = self.config["env"]
         self.env_config = self.config["env_config"]
 
@@ -77,13 +78,14 @@ class RLProblem:
             self.custom_metrics = settings["custom_metrics"]
 
         #Callbacks definition
-        if self.config["callbacks"] != "DefaultCallbacks":
-            if self.config["callbacks"] in ["TrainingCallbacks", "epsConstraintCallbacks"]:
-                self.config["callbacks"] = getattr(callbacks, self.config["callbacks"])
-            else:
-                mod_name, fun_name = self.config["callbacks"].rsplit('.',1)
-                mod = importlib.import_module(mod_name)
-                self.config["callbacks"] = getattr(mod, fun_name)
+        if not callable(self.config["callbacks"]):
+            if self.config["callbacks"] != "DefaultCallbacks":
+                if self.config["callbacks"] in ["TrainingCallbacks", "epsConstraintCallbacks"]:
+                    self.config["callbacks"] = getattr(callbacks, self.config["callbacks"])
+                else:
+                    mod_name, fun_name = self.config["callbacks"].rsplit('.',1)
+                    mod = importlib.import_module(mod_name)
+                    self.config["callbacks"] = getattr(mod, fun_name)
         
         #Postprocessing definition
         self.postproc_data = {"custom_metrics": self.custom_metrics}
