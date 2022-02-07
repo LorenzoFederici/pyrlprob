@@ -4,7 +4,6 @@ from pyrlprob.tests.landing1d import *
 from typing import *
 import matplotlib
 import matplotlib.pyplot as plt
-import yaml
 import os
 
 from pyrlprob.utils.plots import plot_metric
@@ -31,11 +30,7 @@ def test_multiple_gym_envs(envs: List[str]=["CartPole-v1"],
 
     #Plot style
     plt.style.use("seaborn")
-    matplotlib.rc('font', size=20)
-    matplotlib.rc('text', usetex=True)
-    matplotlib.rc('text.latex', preamble='\\usepackage{amsmath} \\usepackage{bm}')
-    matplotlib.rcParams['mathtext.fontset'] = 'stix'
-    matplotlib.rcParams['font.family'] = 'STIXGeneral'
+    matplotlib.rc('font', size=24)
     palette = plt.rcParams['axes.prop_cycle'].by_key()['color']
 
     #For every env, do:
@@ -43,12 +38,12 @@ def test_multiple_gym_envs(envs: List[str]=["CartPole-v1"],
 
         #Create res_dir
         res_dir_env = res_dir + env + "/"
-        os.system("rm -r " + res_dir_env)
+        res_dir_plot = res_dir + "plots/"
         os.makedirs(res_dir_env, exist_ok=True)
 
         #Create figure
         fig = plt.figure()
-        fig.set_size_inches(9.7,6.4)
+        fig.set_size_inches(10.4,6.4)
 
         #For every alg, do:
         for a, alg in enumerate(algs[e]):
@@ -57,11 +52,10 @@ def test_multiple_gym_envs(envs: List[str]=["CartPole-v1"],
             config = os.path.join(__location__, "tuned_examples/" + env + "_" + alg + ".yaml")
 
             #Problem definition
-            # config["stop"]["training_iteration"] *= 2
             Problem = RLProblem(config)
 
             #Training
-            trainer_dir, exp_dirs, last_cps, _ = \
+            _, exp_dirs, last_cps, _ = \
                 Problem.solve(res_dir_env, 
                               evaluate=False, 
                               postprocess=False)
@@ -74,15 +68,16 @@ def test_multiple_gym_envs(envs: List[str]=["CartPole-v1"],
                             label=alg,
                             color=palette[a])
             ax = fig.gca()
-            ax.tick_params(labelsize=20)
+            ax.tick_params(labelsize=24)
             ax.yaxis.grid(True, which='major', linewidth=0.5, linestyle='dashed')
             ax.xaxis.grid(True, which='major', linewidth=0.5, linestyle='dashed')
-            #plt.xlabel('training iteration', fontsize=20)
-            #plt.ylabel('episode reward', fontsize=20)
+            plt.xlabel('Training iteration', fontsize=24)
+            plt.ylabel('Episode return', fontsize=24)
 
         #Save figure
-        ax.legend(fontsize=20, loc = 'best')
-        fig.savefig(res_dir_env + env + "_reward.png", dpi=300)
+        ax.legend(fontsize=24, bbox_to_anchor=(0,1.01,1,0.2), loc="lower left", mode="expand", ncol=5)
+        plt.tight_layout(pad=0)
+        fig.savefig(res_dir_plot + env + "_reward.pdf", dpi=300)
 
 
 if __name__ == "__main__":

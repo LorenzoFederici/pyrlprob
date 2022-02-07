@@ -1,8 +1,10 @@
 config:
   batch_mode: complete_episodes
   entropy_coeff: 0
-  env: MountainCarContinuous-v0
+  env: pyrlprob.tests.landing1d.Landing1DEnv
   framework: tf
+  horizon: 20
+  ignore_worker_failures: true
   lr: 0.001
   min_iter_time_s: 1
   model:
@@ -16,9 +18,9 @@ config:
   num_cpus_per_worker: 1
   num_gpus: 0
   num_workers: 7
-  rollout_fragment_length: 200
+  rollout_fragment_length: 20
   sample_async: false
-  train_batch_size: 2800
+  train_batch_size: 5600
 run: a3c
 stop:
   training_iteration: 100

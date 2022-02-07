@@ -1,0 +1,35 @@
+config:
+  Q_model:
+    fcnet_activation: tanh
+    fcnet_hiddens:
+    - 32
+    - 32
+  batch_mode: complete_episodes
+  buffer_size: 500000
+  env: pyrlprob.tests.landing1d.Landing1DEnv
+  framework: tf
+  horizon: 20
+  ignore_worker_failures: true
+  initial_alpha: 0.1
+  learning_starts: 2800
+  num_cpus_for_driver: 1
+  num_cpus_per_worker: 1
+  num_gpus: 0
+  num_workers: 7
+  optimization:
+    actor_learning_rate: 0.0001
+    critic_learning_rate: 0.001
+    entropy_learning_rate: 0.0001
+  policy_model:
+    fcnet_activation: tanh
+    fcnet_hiddens:
+    - 32
+    - 32
+  rollout_fragment_length: 20
+  target_network_update_freq: 2
+  tau: 0.1
+  timesteps_per_iteration: 20
+  train_batch_size: 5600
+run: sac
+stop:
+  training_iteration: 100
