@@ -284,25 +284,26 @@ def postprocessing(best_exp_dir: str,
     f_end_data.write("\n")
     f_log.write("%20d " % (checkpoint))
 
-    #Episode lengths
-    ep_length = column_progress(best_exp_dir+"progress.csv", \
-                        metric_path + "hist_stats/episode_lengths")
-    ep_length = ep_length[0].strip("[").strip("]").split(", ")
-    ep_length = np.array(ep_length, dtype=int)
+    #Episode data lengths
+    first_key = next(iter(metrics["episode_step_data"]))
+    data_length = column_progress(best_exp_dir+"progress.csv", \
+                        metric_path + "hist_stats/" + first_key + "_length")
+    data_length = data_length[0].strip("[").strip("]").split(", ")
+    data_length = np.array(data_length, dtype=int)
 
     #Retrieve metrics and data from progress.csv
     for key, item in metrics.items():
         for key_in in item.keys():
             if "episode" in key:
-                q = column_progress(best_exp_dir+"progress.csv", metric_path + "hist_stats/" + key_in)
+                q = column_progress(best_exp_dir+"progress.csv", metric_path + "hist_stats/" + key_in)                
                 q = q[0].strip("[").strip("]").split(", ")
                 if key == "episode_step_data":
                     start = 0
                     stop = 0
-                    for e_num, e in enumerate(ep_length):
-                        stop = stop + (e+1)
+                    for e_num, e in enumerate(data_length):
+                        stop = stop + e
                         metrics[key][key_in].append(q[start:stop])
-                        start = start + (e+1)
+                        start = start + e
                 else:
                     metrics[key][key_in] = q
             else:
@@ -318,8 +319,8 @@ def postprocessing(best_exp_dir: str,
     f_log.close()
 
     #Print episode_step_data
-    for e_num, e in enumerate(ep_length):
-        for h in range(e+1):
+    for e_num, e in enumerate(data_length):
+        for h in range(e):
             for key_in in metrics["episode_step_data"].keys():
                 f_step_data.write("%20s " % (metrics["episode_step_data"][key_in][e_num][h]))
             f_step_data.write("\n")
@@ -327,7 +328,7 @@ def postprocessing(best_exp_dir: str,
     f_step_data.close()
 
     #Print episode_end_data
-    for e_num, _ in enumerate(ep_length):
+    for e_num, _ in enumerate(data_length):
         for key_in in metrics["episode_end_data"].keys():
             f_end_data.write("%20s " % (metrics["episode_end_data"][key_in][e_num]))
         f_end_data.write("\n")

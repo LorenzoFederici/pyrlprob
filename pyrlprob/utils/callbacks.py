@@ -116,6 +116,7 @@ class EvaluationCallbacks(DefaultCallbacks):
             if "episode_step_data" in info:
                 for key in info["episode_step_data"].keys():
                     episode.hist_data[key] = episode.user_data[key]
+                    episode.hist_data[key + "_length"] = [len(episode.user_data[key])]
             if "episode_end_data" in info:
                 for key, item in info["episode_end_data"].items():
                     episode.hist_data[key] = [item]
