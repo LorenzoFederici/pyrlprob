@@ -4,6 +4,8 @@ import importlib
 import yaml
 import copy
 
+from ray.rllib.models import ModelCatalog
+
 from pyrlprob.base_funs import *
 from pyrlprob.utils import update
 
@@ -48,8 +50,16 @@ class RLProblem:
         self.env = self.config["env"]
         self.env_config = self.config["env_config"]
 
-        #Model and gamma definition
+        #Model definition
         self.model = self.config["model"]
+        if self.model["custom_model"] is not None:
+            if "." in self.model["custom_model"]:
+                mod_name, model_name = self.model["custom_model"].rsplit('.',1)
+                mod = importlib.import_module(mod_name)
+                custom_model = getattr(mod, model_name)
+                ModelCatalog.register_custom_model(self.model["custom_model"], custom_model)
+
+        #Gamma definition
         self.gamma = self.config["gamma"]
 
         #Evaluation config definition

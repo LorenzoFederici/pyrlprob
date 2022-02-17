@@ -12,3 +12,4 @@ results/
 test_gym.py
 .DS_Store
 *.sh
+*.png
