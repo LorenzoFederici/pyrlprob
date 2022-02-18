@@ -8,6 +8,7 @@ import os
 
 import ray
 from ray import tune
+from ray.rllib.models import ModelCatalog
 
 from pyrlprob.utils.auxiliary import *
 import pyrlprob.utils.callbacks as callbacks
@@ -136,13 +137,13 @@ def evaluation(trainer_dir: str,
         debug (bool):  whether to print data fro debugging
     """
     
-    #Path of metrics
+    # Path of metrics
     metric_path = ""
     if is_evaluation_env:
         metric_path = "evaluation/"
 
     if trainer_dir is not None:
-        #Determine the best checkpoint
+        # Determine the best checkpoint
         episode_reward = metric_training_trend(metric_path + "episode_reward_mean",
                                             exp_dirs,
                                             last_cps)
@@ -150,7 +151,7 @@ def evaluation(trainer_dir: str,
         best_exp = next(exp for exp, cp in enumerate(last_cps) if cp >= best_cp)
         best_exp_dir = exp_dirs[best_exp]
 
-        #Define load properties
+        # Define load properties
         load = {}
         load["logdir"] = trainer_dir
         _, load["checkpoint_dir"] = \
@@ -158,18 +159,18 @@ def evaluation(trainer_dir: str,
     else:
         load = None
 
-    #Check what metrics/data are defined
+    # Check what metrics/data are defined
     if metrics_and_data is None:
         metrics_and_data = {}
     for key in ["episode_step_data", "episode_end_data", "custom_metrics"]:
         if not key in metrics_and_data:
             metrics_and_data[key] = []      
                 
-    #Define standard PG trainer and configs for evaluation
+    # Define standard PPO trainer and configs for evaluation
     trainer = ray.rllib.agents.ppo.PPOTrainer
     config = {}
 
-    # env config
+    # Env config
     config["env"] = env_name
     mod_name, fun_name = env_name.rsplit('.',1)
     mod = importlib.import_module(mod_name)
@@ -178,22 +179,30 @@ def evaluation(trainer_dir: str,
     config["env_config"] = env_config
     env_inst = env(env_config)
 
-    # general config
+    # Model config
+    config["model"] = model
+    if model["custom_model"] is not None:
+        if "." in model["custom_model"]:
+            mod_name, model_name = model["custom_model"].rsplit('.',1)
+            mod = importlib.import_module(mod_name)
+            custom_model = getattr(mod, model_name)
+            ModelCatalog.register_custom_model(model["custom_model"], custom_model)
+
+    # General config
     config["num_workers"] = 0
     config["num_envs_per_worker"] = 1
     config["create_env_on_driver"] = True
-    config["model"] = model
     config["gamma"] = gamma
     config["batch_mode"] = "complete_episodes"
     config["train_batch_size"] = env_inst.max_episode_steps
     config["rollout_fragment_length"] = env_inst.max_episode_steps
 
-    # ppo config
+    # PPO config
     config["num_sgd_iter"] = 1
     config["sgd_minibatch_size"] = 1
     config["lr"] = 0.
     
-    # evaluation and callbacks config
+    # Evaluation and callbacks config
     config["evaluation_interval"] = 1
     config["evaluation_num_episodes"] = evaluation_num_episodes
     config["evaluation_num_workers"] = 0
@@ -208,15 +217,14 @@ def evaluation(trainer_dir: str,
     config["callbacks"] = callbacks.EvaluationCallbacks
     stop = {"training_iteration": 1}
 
-
-    #Evaluation
+    # Evaluation
     _, new_best_exp_dir, last_checkpoint  = training(trainer=trainer, 
                                                      config=config,
                                                      stop=stop,
                                                      load=load,
                                                      debug=debug)
     
-    #Postprocessing
+    # Postprocessing
     if do_postprocess:
         cp_dir = postprocessing(best_exp_dir=new_best_exp_dir, 
                                 checkpoint=last_checkpoint, 
