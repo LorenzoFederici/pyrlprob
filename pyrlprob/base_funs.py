@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 import time
 from typing import *
@@ -51,7 +52,11 @@ def training(trainer: Union[str, Callable, Type],
         restore = None
 
     #Initialize ray
-    ray.init(log_to_driver=debug)
+    if debug:
+        logging_level = "INFO"
+    else:
+        logging_level = "ERROR"
+    ray.init(logging_level=logging_level, log_to_driver=debug)
     
     #Train the model
     start_time = time.time()
