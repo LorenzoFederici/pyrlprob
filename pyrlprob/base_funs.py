@@ -112,6 +112,7 @@ def evaluation(trainer_dir: str,
                evaluation_num_episodes: int, 
                evaluation_config: Dict[str, Any],
                custom_eval_function: Optional[Union[Callable, str]]=None,
+               best_metric: str="episode_reward_mean",
                metrics_and_data: Optional[Dict[str, Any]]=None,
                is_evaluation_env: bool=False,
                do_postprocess: bool=True,
@@ -130,6 +131,7 @@ def evaluation(trainer_dir: str,
         evaluation_num_episodes (int): number of evaluation episodes
         evaluation_config (dict): dictionary containing the evaluation configs
         custom_eval_function (callable or str): Custom evaluation function (or function name)
+        best_metric (str): metric to be used to determine the best checkpoint in exp_dirs
         metrics_and_data (dict): dictionary containing the metrics and data to save
             in the new file progress.csv
         is_evaluation_env (bool): are metrics computed through an evaluation environment?
@@ -144,10 +146,10 @@ def evaluation(trainer_dir: str,
 
     if trainer_dir is not None:
         # Determine the best checkpoint
-        episode_reward = metric_training_trend(metric_path + "episode_reward_mean",
+        best_metric_trend = metric_training_trend(metric_path + best_metric,
                                             exp_dirs,
                                             last_cps)
-        best_cp = np.argmax(episode_reward)+1
+        best_cp = np.argmax(best_metric_trend)+1
         best_exp = next(exp for exp, cp in enumerate(last_cps) if cp >= best_cp)
         best_exp_dir = exp_dirs[best_exp]
 

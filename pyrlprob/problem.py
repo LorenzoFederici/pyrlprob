@@ -121,6 +121,7 @@ class RLProblem:
     def solve(self,
               logdir: Optional[str]=None,
               evaluate: bool=True, 
+              best_metric: str="episode_reward_mean",
               postprocess: bool=True,
               debug: bool=False) -> Tuple[str, List[str], List[int], str]:
         """
@@ -131,6 +132,7 @@ class RLProblem:
         Args:
             logdir (str): name of the directory where training results are saved
             evaluate (bool): whether to do evaluation
+            best_metric (str): metric to be used to determine the best checkpoint in exp_dir during evaluation
             postprocess (bool): whether to do postprocessing
             debug (bool): whether to print worker's logs.
         
@@ -158,6 +160,7 @@ class RLProblem:
             exp_dirs, last_cps, best_cp_dir = self.evaluate(trainer_dir=trainer_dir,
                                                             exp_dir=best_exp_dir,
                                                             last_checkpoint=last_checkpoint,
+                                                            best_metric=best_metric,
                                                             do_postprocess=postprocess,
                                                             debug=debug)
         else:
@@ -175,6 +178,7 @@ class RLProblem:
                  trainer_dir: Optional[str] = None,
                  exp_dir: Optional[str] = None,
                  last_checkpoint: Optional[int] = None,
+                 best_metric: str = "episode_reward_mean",
                  do_postprocess: Optional[bool] = True,
                  debug: bool = False) -> Tuple[List[str], List[int], str]:
         """
@@ -185,6 +189,7 @@ class RLProblem:
             trainer_dir (str): trainer directory
             exp_dir (str): experiment directory
             last_checkpoint (int): last checkpoint of the experiment
+            best_metric (str): metric to be used to determine the best checkpoint in exp_dir
             do_postprocess (bool): whether to do postprocessing
             debug (bool): is debugging mode on?
         """
@@ -204,6 +209,7 @@ class RLProblem:
                                  evaluation_num_episodes=self.num_eval_episodes,
                                  evaluation_config=self.evaluation_config, 
                                  custom_eval_function=self.custom_eval_function, 
+                                 best_metric=best_metric,
                                  metrics_and_data=self.postproc_data, 
                                  is_evaluation_env=self.evaluation, 
                                  do_postprocess=do_postprocess,
