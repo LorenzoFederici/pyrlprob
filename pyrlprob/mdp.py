@@ -51,6 +51,8 @@ class AbstractMDP(gym.Env):
         for key, item in config.items():
             setattr(self, key, item)
         
+        self.state = None
+        self.time_step = None
         self.max_episode_steps = 999999
 
         self.epsilon = 0.
@@ -116,14 +118,16 @@ class AbstractMDP(gym.Env):
     
 
     def next_state(self,
-                   state: Optional[Any], 
-                   control: Any) -> Any:
+                   state: Optional[Any]=None, 
+                   control: Optional[Any]=None,
+                   time_step: Optional[Any]=None) -> Any:
         """
         Propagate state
 
         Args:
             state (Any): current system state
             control (Any): current control
+            time_step (Any): time step for state transition
         
         Return:
             next_state (Any): next system state
@@ -220,7 +224,7 @@ class AbstractMDP(gym.Env):
         control = self.get_control(action, self.prev_state)
 
         # Next state
-        self.state = self.next_state(self.prev_state, control)
+        self.state = self.next_state(self.prev_state, control, self.time_step)
 
         # Get observation
         observation = self.get_observation(self.state, control)
