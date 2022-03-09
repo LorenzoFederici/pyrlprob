@@ -89,7 +89,7 @@ class Landing1DEnv(AbstractMDP):
         super().__init__(config=config)
 
         #Class attributes
-        self.dt = self.tf/(float(self.H))
+        self.time_step = self.tf/(float(self.H))
 
         #Observation space
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)
@@ -130,7 +130,8 @@ class Landing1DEnv(AbstractMDP):
 
     def next_state(self,
                    state, 
-                   control) -> Dict[str, float]:
+                   control,
+                   time_step) -> Dict[str, float]:
         """
         Propagate state: integration of system dynamics
         """
@@ -140,7 +141,7 @@ class Landing1DEnv(AbstractMDP):
 
         #Integration of equations of motion
         landed_or_empty_event.terminal = True
-        sol = solve_ivp(fun=dynamics, t_span=[state["t"], state["t"]+self.dt], y0=s, method='RK45', 
+        sol = solve_ivp(fun=dynamics, t_span=[state["t"], state["t"]+time_step], y0=s, method='RK45', 
             args=(self.g, control, self.c), events=landed_or_empty_event, rtol=1e-6, atol=1e-6)
 
         #State at next time-step
