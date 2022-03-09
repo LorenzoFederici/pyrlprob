@@ -10,7 +10,7 @@
 
 </div>
 
-pyRLprob is a Python library for easy training, evaluation, and postprocessing of [OpenAI-Gym](https://gym.openai.com/) environments through [Ray-RLlib](https://docs.ray.io/en/master/rllib.html) Reinforcement Learning library.
+PyRLprob is an open-source python library for easy training, evaluation, and postprocessing of [OpenAI-Gym](https://gym.openai.com/) environments through [Ray-RLlib](https://docs.ray.io/en/master/rllib.html) reinforcement learning library.
 
 ## Installation
 
@@ -20,7 +20,7 @@ Use the package manager [pip](https://pip.pypa.io/en/stable/) to install the lat
 pip install pyrlprob
 ```
 
-To test if the package is installed correctly, run the following tests (one-dimensional landing problem):
+To test if the package is installed correctly, run the following tests:
 
 
 ```python
@@ -32,6 +32,9 @@ test_train_eval()
 ```
 
 If the code exits without errors, a folder named `results/` with the test results will be created in your current directory.
+
+## User Guide
+Coming soon...
 
 ## Credits
 pyRLprob has been created by [Lorenzo Federici](https://github.com/LorenzoFederici) in 2021.
