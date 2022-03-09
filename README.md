@@ -20,7 +20,7 @@ Use the package manager [pip](https://pip.pypa.io/en/stable/) to install the lat
 pip install pyrlprob
 ```
 
-To test if the package is installed correctly, run the following tests (one-dimensional landing problem):
+To test if the package is installed correctly, run the following tests:
 
 
 ```python
