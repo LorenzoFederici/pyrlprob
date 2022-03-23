@@ -113,6 +113,7 @@ def evaluation(trainer_dir: str,
                evaluation_config: Dict[str, Any],
                custom_eval_function: Optional[Union[Callable, str]]=None,
                best_metric: str="episode_reward_mean",
+               min_or_max: str="max",
                metrics_and_data: Optional[Dict[str, Any]]=None,
                is_evaluation_env: bool=False,
                do_postprocess: bool=True,
@@ -132,6 +133,7 @@ def evaluation(trainer_dir: str,
         evaluation_config (dict): dictionary containing the evaluation configs
         custom_eval_function (callable or str): Custom evaluation function (or function name)
         best_metric (str): metric to be used to determine the best checkpoint in exp_dirs
+        min_or_max (str): if best_metric must be minimized or maximized
         metrics_and_data (dict): dictionary containing the metrics and data to save
             in the new file progress.csv
         is_evaluation_env (bool): are metrics computed through an evaluation environment?
@@ -149,7 +151,10 @@ def evaluation(trainer_dir: str,
         best_metric_trend = metric_training_trend(metric_path + best_metric,
                                             exp_dirs,
                                             last_cps)
-        best_cp = np.argmax(best_metric_trend)+1
+        if min_or_max == "max":
+            best_cp = np.argmax(best_metric_trend)+1
+        else:
+            best_cp = np.argmin(best_metric_trend)+1
         best_exp = next(exp for exp, cp in enumerate(last_cps) if cp >= best_cp)
         best_exp_dir = exp_dirs[best_exp]
 
@@ -280,9 +285,9 @@ def postprocessing(best_exp_dir: str,
         }
 
     #Create output files
-    f_log = open(cp_dir + "metrics.txt", "w") # open file
-    f_end_data = open(cp_dir + "episode_end_data.txt", "w") # open file
-    f_step_data = open(cp_dir + "episode_step_data.txt", "w") # open file
+    f_log = open(cp_dir + "metrics.txt", "w")
+    f_end_data = open(cp_dir + "episode_end_data.txt", "w")
+    f_step_data = open(cp_dir + "episode_step_data.txt", "w")
 
     f_log.write("%20s " % ("# checkpoint"))
     for key, item in metrics.items():

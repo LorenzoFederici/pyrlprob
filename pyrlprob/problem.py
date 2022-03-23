@@ -122,6 +122,7 @@ class RLProblem:
               logdir: Optional[str]=None,
               evaluate: bool=True, 
               best_metric: str="episode_reward_mean",
+              min_or_max: str="max",
               postprocess: bool=True,
               debug: bool=False) -> Tuple[str, List[str], List[int], str]:
         """
@@ -133,6 +134,7 @@ class RLProblem:
             logdir (str): name of the directory where training results are saved
             evaluate (bool): whether to do evaluation
             best_metric (str): metric to be used to determine the best checkpoint in exp_dir during evaluation
+            min_or_max (str): if best_metric must be minimized or maximized
             postprocess (bool): whether to do postprocessing
             debug (bool): whether to print worker's logs.
         
@@ -161,6 +163,7 @@ class RLProblem:
                                                             exp_dir=best_exp_dir,
                                                             last_checkpoint=last_checkpoint,
                                                             best_metric=best_metric,
+                                                            min_or_max=min_or_max,
                                                             do_postprocess=postprocess,
                                                             debug=debug)
         else:
@@ -179,6 +182,7 @@ class RLProblem:
                  exp_dir: Optional[str] = None,
                  last_checkpoint: Optional[int] = None,
                  best_metric: str = "episode_reward_mean",
+                 min_or_max: str = "max",
                  do_postprocess: Optional[bool] = True,
                  debug: bool = False) -> Tuple[List[str], List[int], str]:
         """
@@ -190,6 +194,7 @@ class RLProblem:
             exp_dir (str): experiment directory
             last_checkpoint (int): last checkpoint of the experiment
             best_metric (str): metric to be used to determine the best checkpoint in exp_dir
+            min_or_max (str): if best_metric must be minimized or maximized
             do_postprocess (bool): whether to do postprocessing
             debug (bool): is debugging mode on?
         """

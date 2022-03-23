@@ -10,6 +10,10 @@ import collections.abc
 
 
 def update(d, u):
+    """
+    Update the elements in dictiory d with those in dictionary u.
+    """
+
     for k, v in u.items():
         if isinstance(v, collections.abc.Mapping):
             d[k] = update(d.get(k, {}), v)
@@ -20,14 +24,11 @@ def update(d, u):
 
 def set_global_seeds(seed: Optional[int]=None) -> List[int]:
     """
-    set the seed for python random, tensorflow, pytorch, numpy and gym spaces
+    Set the seed for python random, tensorflow, pytorch, numpy and gym spaces
 
     :param seed: (int) the seed
     """
-    # tf.random.set_seed(seed)
-    # torch.manual_seed(seed)
-    # if torch.cuda.is_available():
-    #     torch.cuda.manual_seed_all(seed)
+
     np.random.seed(seed)
     random.seed(seed)
     if hasattr(gym.spaces, 'prng'):
@@ -71,7 +72,6 @@ def moving_average(values: np.ndarray,
         smoothed_values (numpy array): smoothed values
     """
 
-
     weights = np.repeat(1.0, window) / window
     smoothed_values = np.convolve(values, weights, 'valid')
 
@@ -114,7 +114,6 @@ def metric_training_trend(metric_name: str,
     Return:
         metric_trend (list): list with the values of the metric
     """
-
 
     metric_trend = []
     for exp_num, exp_dir in enumerate(experiment_dirs):

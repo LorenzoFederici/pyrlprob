@@ -5,7 +5,7 @@ this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
 setup(name='pyrlprob',
-    version='1.5.2',
+    version='1.5.3',
     author='Lorenzo Federici',
     author_email = 'federicilorenzo94@gmail.com',
     description = 'Train easily OpenAI-Gym environments through Ray-RLlib',
@@ -37,5 +37,5 @@ setup(name='pyrlprob',
         'PyYAML'
     ],
     packages = find_packages(),
-    python_requires = '>=3.7',
+    python_requires = '>=3.8',
     include_package_data = True)

@@ -27,6 +27,7 @@ class AbstractMDP(gym.Env):
         action_space: the Space object corresponding to valid actions
         observation_space: the Space object corresponding to valid observations
         reward_range: a tuple corresponding to the min and max possible rewards (optional)
+        time_step: length of any time-step in the MDP (optional)
         max_episode_steps: an int indicating the maximum number of steps in one episode
     
     If the user wants to use the callbacks defined in pyrlprob.utils.callbacks, the info dictionary
@@ -34,6 +35,12 @@ class AbstractMDP(gym.Env):
         custom_metrics: metrics to be included in tensorboard data
         episode_step_data: data saved at each step
         episode_end_data: data saved just at the end of the episode
+    
+    The epsilon-constraint technique can be activated just by including epsConstraintCallbacks 
+    among the callbacks in the config file and by properly setting the
+    class attributes self.epsilon0, self.epsilonf, self.iter0, self.iterf, which specify the initial and
+    final value of the constraint satisfaction tolerance, and the training iterations which define
+    the interval in which epsilon decreases.
     """
 
     def __init__(self, 
