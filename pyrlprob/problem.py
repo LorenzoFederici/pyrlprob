@@ -215,6 +215,7 @@ class RLProblem:
                                  evaluation_config=self.evaluation_config, 
                                  custom_eval_function=self.custom_eval_function, 
                                  best_metric=best_metric,
+                                 min_or_max=min_or_max,
                                  metrics_and_data=self.postproc_data, 
                                  is_evaluation_env=self.evaluation, 
                                  do_postprocess=do_postprocess,
