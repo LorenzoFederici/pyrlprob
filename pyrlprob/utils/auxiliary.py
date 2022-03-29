@@ -11,7 +11,7 @@ import collections.abc
 
 def update(d, u):
     """
-    Update the elements in dictiory d with those in dictionary u.
+    Update the elements in dictionary d with those in dictionary u.
     """
 
     for k, v in u.items():
