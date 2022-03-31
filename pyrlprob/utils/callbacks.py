@@ -119,10 +119,17 @@ class EvaluationCallbacks(DefaultCallbacks):
                     episode.hist_data[key + "_length"] = [len(episode.user_data[key])]
             if "episode_end_data" in info:
                 for key, item in info["episode_end_data"].items():
-                    episode.hist_data[key] = [item]
+                    if isinstance(item, Iterable):
+                        episode.hist_data[key] = [item[-1]]
+                    else:
+                        episode.hist_data[key] = [item]
             if "custom_metrics" in info:
                 for key, item in info["custom_metrics"].items():
-                    episode.hist_data[key] = [item]
-                    episode.custom_metrics[key] = item
+                    if isinstance(item, Iterable):
+                        episode.hist_data[key] = [item[-1]]
+                        episode.custom_metrics[key] = item[-1]
+                    else:
+                        episode.hist_data[key] = [item]
+                        episode.custom_metrics[key] = item
 
 
