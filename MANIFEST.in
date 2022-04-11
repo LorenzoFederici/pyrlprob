@@ -1,2 +1,7 @@
+include pyrlprob/tests/py_tests/tuned_examples/*.yaml
 include pyrlprob/tests/*.yaml
-include pyrlprob/tests/tuned_examples/*.yaml
+include pyrlprob/tests/cpp_tests/*.h
+include pyrlprob/tests/cpp_tests/*.cpp
+include pyrlprob/tests/cpp_tests/*.so
+include pyrlprob/include/pyrlprob/*.h
+include pyrlprob/Makefile

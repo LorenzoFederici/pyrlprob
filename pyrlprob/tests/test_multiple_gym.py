@@ -1,5 +1,5 @@
 from pyrlprob.problem import RLProblem
-from pyrlprob.tests.landing1d import *
+from pyrlprob.tests import *
 
 from typing import *
 import matplotlib
@@ -49,7 +49,7 @@ def test_multiple_gym_envs(envs: List[str]=["CartPole-v1"],
         for a, alg in enumerate(algs[e]):
             
             #Config file
-            config = os.path.join(__location__, "tuned_examples/" + env + "_" + alg + ".yaml")
+            config = os.path.join(__location__, "py_tests/tuned_examples/" + env + "_" + alg + ".yaml")
 
             #Problem definition
             Problem = RLProblem(config)

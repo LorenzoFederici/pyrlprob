@@ -10,7 +10,7 @@
 
 </div>
 
-PyRLprob is an open-source python library for easy training, evaluation, and postprocessing of [OpenAI-Gym](https://gym.openai.com/) environments through [Ray-RLlib](https://docs.ray.io/en/master/rllib.html) reinforcement learning library.
+PyRLprob is an open-source python library for easy training, evaluation, and postprocessing of [Gym](https://gym.openai.com/)-based environments, written in python or c++, through [Ray-RLlib](https://docs.ray.io/en/master/rllib.html) reinforcement learning library.
 
 ## Installation
 

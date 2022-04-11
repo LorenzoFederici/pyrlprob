@@ -5,74 +5,13 @@ from typing import *
 import gym
 from gym import spaces
 
-import ray
-from ray.tune.registry import register_env
-
 from pyrlprob.mdp import AbstractMDP
 
-import scipy
-from scipy.integrate import solve_ivp
+from pyrlprob.tests.py_tests.landing1d_gym import *
+from pyrlprob.tests.py_tests.landing1d_dyn import *
 
 
-#Default config for Landing1DEnv
-DEFAULT_CONFIG_LANDING1D = {
-    "H": 20,
-    "h0_min": 0.8,
-    "h0_max": 1.2,
-    "v0_min": -0.85,
-    "v0_max": -0.75,
-    "m0": 1.0,
-    "tf": 1.397,
-    "hf": 0.0,
-    "vf": 0.0,
-    "Tmax": 1.227,
-    "c": 2.349,
-    "g": 1.0
-}
-
-
-def dynamics(t, 
-             s,
-             g, 
-             T, 
-             c) -> np.ndarray:
-
-    """
-    System dynamics: vertical landing on planetary body
-        with constant gravity g and thrust T
-    """
-    #State
-    h = s[0]
-    v = s[1]
-    m = s[2]
-
-    #Equations of motion
-    h_dot = v
-    v_dot = - g + T/m
-    m_dot = - T/c
-
-    s_dot = np.array([h_dot, v_dot, m_dot], dtype=np.float32)
-
-    return s_dot
-
-
-def landed_or_empty_event(t, 
-                          s,
-                          g, 
-                          T, 
-                          c) -> float:
-    """
-    Event for dynamics: it stops the integration if h < 0 (landed) or m < 0 (empy prop tanks)
-    """
-
-    #State
-    h = s[0]
-    m = s[2]
-
-    return min(h, m)
-
-
-class Landing1DEnv(AbstractMDP):
+class pyLanding1DEnv(AbstractMDP):
     """
     One-Dimensional Landing Problem.
     Reference: https://doi.org/10.2514/6.2008-6615
@@ -129,32 +68,33 @@ class Landing1DEnv(AbstractMDP):
 
 
     def next_state(self,
-                   state, 
-                   control,
-                   time_step) -> Dict[str, float]:
+                   state: Optional[Any], 
+                   control: Any) -> Dict[str, float]:
         """
         Propagate state: integration of system dynamics
         """
 
         #State at current time-step
-        s = np.array([state["h"], state["v"], state["m"]], dtype=np.float32)
+        s = np.array([state["h"], state["v"], state["m"]])
 
         #Integration of equations of motion
-        landed_or_empty_event.terminal = True
-        sol = solve_ivp(fun=dynamics, t_span=[state["t"], state["t"]+time_step], y0=s, method='RK45', 
-            args=(self.g, control, self.c), events=landed_or_empty_event, rtol=1e-6, atol=1e-6)
+        data = np.array([self.g, control, self.c])
+
+        # Integration
+        t_eval = np.array([state['t'], state['t'] + self.dt])
+        sol = rk4(dynamics, s, t_eval, data)
 
         #State at next time-step
-        self.event = sol.status
-        s_new = {"h": sol.y[0][-1], "v": sol.y[1][-1], "m": sol.y[2][-1], "t": sol.t[-1], "step": state["step"] + 1}
+        self.success = True
+        s_new = {"h": sol[0], "v": sol[1], "m": sol[2], "t": t_eval[-1], "step": state["step"] + 1}
         
         return s_new
     
 
     def collect_reward(self,
-                       prev_state, 
-                       state, 
-                       control) -> Tuple[float, bool]:
+                       prev_state: Optional[Any]=None, 
+                       state: Optional[Any]=None, 
+                       control: Optional[Any]=None) -> Tuple[float, bool]:
         """
         Get current reward and done signal.
         """
@@ -165,7 +105,9 @@ class Landing1DEnv(AbstractMDP):
 
         if state["step"] == self.H:
             done = True
-        if self.event == 1:
+        if not self.success:
+            done = True
+        if state["h"] <= 0. or state["m"] <= 0.:
             done = True
         
         if done:
@@ -225,10 +167,5 @@ class Landing1DEnv(AbstractMDP):
 
         return observation
 
-#Register environment
-def landing_env_creator(env_config):
-    return Landing1DEnv(env_config)
-
-register_env("Landing1D", landing_env_creator)
 
     

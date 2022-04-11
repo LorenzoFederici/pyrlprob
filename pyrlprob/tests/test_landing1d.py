@@ -1,8 +1,7 @@
 from pyrlprob.problem import RLProblem
-from pyrlprob.tests.landing1d import Landing1DEnv
+from pyrlprob.tests import *
 
 from typing import *
-import matplotlib
 import matplotlib.pyplot as plt
 import yaml
 import os
@@ -10,17 +9,80 @@ import os
 from pyrlprob.utils.plots import plot_metric
 
 
-def test_landing_env_train(res_dir: Optional[str]=None) -> None:
+def test_train_py(res_dir: Optional[str]=None) -> None:
     """
-    Test pyrlprob training functionalities in the Landing1D environment.
+    Test pyrlprob training functionalities in the Landing1D environment
+        written in python.
 
     Args:
         res_dir: path where results are saved. Current directory if not specified.
     """
 
+    #Train
+    _, _, _, _ = \
+        test_landing_env_train(py_or_cpp="py",
+                               res_dir=res_dir)
+
+
+def test_train_cpp(res_dir: Optional[str]=None) -> None:
+    """
+    Test pyrlprob training functionalities in the Landing1D environment
+        written in c++.
+
+    Args:
+        res_dir: path where results are saved. Current directory if not specified.
+    """
+
+    #Train
+    _, _, _, _ = \
+        test_landing_env_train(py_or_cpp="cpp",
+                               res_dir=res_dir)
+
+
+def test_train_eval_py(res_dir: Optional[str]=None) -> None:
+    """
+    Test pyrlprob training, evaluation and post-processing functionalities 
+        in the Landing1D environment written in python.
+
+    Args:
+        res_dir: path where results are saved. Current directory if not specified.
+    """
+
+    #Train, evaluate, post-process
+    test_landing_env_train_eval(py_or_cpp="py",
+                               res_dir=res_dir)
+
+
+def test_train_eval_cpp(res_dir: Optional[str]=None) -> None:
+    """
+    Test pyrlprob training, evaluation and post-processing functionalities 
+        in the Landing1D environment written in c++.
+
+    Args:
+        res_dir: path where results are saved. Current directory if not specified.
+    """
+
+    #Train, evaluate, post-process
+    test_landing_env_train_eval(py_or_cpp="cpp",
+                               res_dir=res_dir)
+
+
+def test_landing_env_train(py_or_cpp: str="py",
+                           res_dir: Optional[str]=None) -> Tuple[RLProblem, str, List[str], List[int]]:
+    """
+    Test pyrlprob training functionalities in the Landing1D environment.
+
+    Args:
+        py_or_cpp: python or cpp version of the environment?
+        res_dir: path where results are saved. Current directory if not specified.
+    """
+
     #Config file
     __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-    config = os.path.join(__location__, "landing1d.yaml")
+    if py_or_cpp == "py":
+        config = os.path.join(__location__, "landing1d_py.yaml")
+    elif py_or_cpp == "cpp":
+        config = os.path.join(__location__, "landing1d_cpp.yaml")
 
     #Problem definition
     LandingProblem = RLProblem(config)
@@ -31,37 +93,27 @@ def test_landing_env_train(res_dir: Optional[str]=None) -> None:
                              evaluate=False, 
                              postprocess=False)
 
-    #Plot of metric trend
-    plt.style.use("seaborn")
-    fig = plot_metric("episode_reward",
-                      exp_dirs,
-                      last_cps)
-    plt.xlabel('training iteration', fontsize=20)
-    plt.ylabel('episode reward', fontsize=20)
-    fig.savefig(trainer_dir + "episode_reward.png")
+    return LandingProblem, trainer_dir, exp_dirs, last_cps
 
 
-def test_landing_env_train_eval(res_dir: Optional[str]=None) -> None:
+def test_landing_env_train_eval(py_or_cpp: str="py",
+                                res_dir: Optional[str]=None) -> None:
     """
     Test pyrlprob training, evaluation and post-processing functionalities 
         in the Landing1D environment.
 
     Args:
+        py_or_cpp: python or cpp version of the environment?
         res_dir: path where results are saved. Current directory if not specified.
     """
 
-    #Config file
+
     __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-    config = os.path.join(__location__, "landing1d.yaml")
 
-    #Problem definition
-    LandingProblem = RLProblem(config)
-
-    #Training
-    trainer_dir, exp_dirs, last_cps, _ = \
-        LandingProblem.solve(res_dir, 
-                             evaluate=False, 
-                             postprocess=False)
+    #Train
+    LandingProblem, trainer_dir, exp_dirs, last_cps = \
+        test_landing_env_train(py_or_cpp=py_or_cpp,
+                               res_dir=res_dir)
 
     #Create new config file for model re-training
     load = {"load": {"trainer_dir": trainer_dir,
