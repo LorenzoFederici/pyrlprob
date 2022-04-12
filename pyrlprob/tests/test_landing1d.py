@@ -83,6 +83,7 @@ def test_landing_env_train(py_or_cpp: str="py",
         config = os.path.join(__location__, "landing1d_py.yaml")
     elif py_or_cpp == "cpp":
         config = os.path.join(__location__, "landing1d_cpp.yaml")
+        os.system("make -f " + os.path.join(__location__, "Makefile"))
 
     #Problem definition
     LandingProblem = RLProblem(config)

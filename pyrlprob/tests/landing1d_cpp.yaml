@@ -52,7 +52,7 @@ config:
   clip_param: 0.2
   callbacks:
     TrainingCallbacks
-  env: pyrlprob.tests.cppLanding1DVectorEnv
+  env: pyrlprob.tests.cpp_tests.cppLanding1DVectorEnv
   env_config:
     num_envs: 12
     num_threads: 6

@@ -1,4 +1,4 @@
-dir = ./tests/cpp_tests/
+dir = ./pyrlprob/tests/cpp_tests/
 exec = $(dir)landing1d_cpp$(shell python3-config --extension-suffix)
 INC = $(shell python3 -m pybind11 --includes) $(shell python3 -m pyrlprob --includes)
 LIB = 
