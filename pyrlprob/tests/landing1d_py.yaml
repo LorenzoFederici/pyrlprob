@@ -10,7 +10,7 @@ postproc_data:
   - m
   - t
   - T
-num_eval_episodes: 1
+num_eval_episodes: 10
 eval_env_config:
   env_config:
     prng_seed: 0

@@ -10,18 +10,18 @@ postproc_data:
   - m
   - t
   - T
-num_eval_episodes: 1
+num_eval_episodes: 10
 eval_env_config:
   env_config:
     prng_seed: 0
 config:
-  num_workers: 1
-  num_envs_per_worker: 12
+  num_workers: 0
+  num_envs_per_worker: 1
   num_gpus: 0
-  num_cpus_per_worker: 3
+  num_cpus_per_worker: 0
   num_gpus_per_worker: 0
-  num_cpus_for_driver: 1
-  remote_worker_envs: True
+  num_cpus_for_driver: 4
+  create_env_on_driver: True
   rollout_fragment_length: 40
   batch_mode: complete_episodes
   train_batch_size: 1920

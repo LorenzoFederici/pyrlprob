@@ -54,8 +54,8 @@ class MDPEnv_cpp
         const int iterf = 1, const double epsilonf = 0.) :
         reward_range{std::make_tuple(min_reward, max_reward)}, 
         max_episode_steps{max_episode_steps},
-        time_step{time_step}, iter0{iter0}, epsilon0{epsilon0},
-        iterf{iterf}, epsilonf{epsilonf}
+        iter0{iter0}, iterf{iterf}, time_step{time_step}, 
+        epsilon0{epsilon0}, epsilonf{epsilonf}
         {
            const std::vector<unsigned int> values = this->seed();
         };
@@ -112,9 +112,6 @@ class MDPEnv_cpp
     */
     virtual const std::vector<unsigned int> seed(unsigned int prng_seed_ = time(NULL))
     {
-        // if (!prng_seed_)
-        //     prng_seed_ = time(NULL);
-        
         this->prng_seed = prng_seed_;
         gen.seed(prng_seed);
         srand(prng_seed);

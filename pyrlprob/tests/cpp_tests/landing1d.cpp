@@ -8,6 +8,9 @@ INPUT:
 */
 Landing1DEnv_cpp::Landing1DEnv_cpp(
     const std::map<std::string,Landing1DEnv_cpp::config_type>& config) : 
+    MDPEnv_cpp(-std::numeric_limits<double>::infinity(), 
+        0., std::get<int>(config.at("H")), 
+        std::get<double>(config.at("tf"))/((double)std::get<int>(config.at("H")))),
     H{std::get<int>(config.at("H"))},
     h0_min{std::get<double>(config.at("h0_min"))},
     h0_max{std::get<double>(config.at("h0_max"))},
@@ -22,9 +25,7 @@ Landing1DEnv_cpp::Landing1DEnv_cpp(
     g{std::get<double>(config.at("g"))},
     dist_h(h0_min, h0_max),
     dist_v(v0_min, v0_max),
-    EoM(g, c),
-    MDPEnv_cpp(-std::numeric_limits<double>::infinity(), 
-        0., H, tf / (double)H)
+    EoM(g, c)
 {
     if (config.find("prng_seed") != config.end())
     {

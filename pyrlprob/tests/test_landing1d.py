@@ -91,7 +91,8 @@ def test_landing_env_train(py_or_cpp: str="py",
     trainer_dir, exp_dirs, last_cps, _ = \
         LandingProblem.solve(res_dir, 
                              evaluate=False, 
-                             postprocess=False)
+                             postprocess=False,
+                             debug=False)
 
     return LandingProblem, trainer_dir, exp_dirs, last_cps
 

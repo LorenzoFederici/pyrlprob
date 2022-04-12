@@ -15,7 +15,7 @@ class Landing1DEnv_cpp :
     double, double, double, double, std::variant<int,double>>
 {
   /* Attributes */
-  protected:
+  public:
 
   const int H;
   const double h0_min, h0_max, v0_min, v0_max, m0, 
@@ -24,7 +24,6 @@ class Landing1DEnv_cpp :
   Landing1D_EoM EoM;
 
   /* Methods */
-  public:
 
   Landing1DEnv_cpp(const std::map<std::string,config_type>& config);
   const std::vector<obs_type> get_observation(

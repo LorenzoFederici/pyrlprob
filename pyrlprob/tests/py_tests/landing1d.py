@@ -27,8 +27,11 @@ class pyLanding1DEnv(AbstractMDP):
 
         super().__init__(config=config)
 
-        #Class attributes
+        #Time step
         self.time_step = self.tf/(float(self.H))
+
+        #Maximum episode steps
+        self.max_episode_steps = self.H
 
         #Observation space
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)
@@ -39,9 +42,6 @@ class pyLanding1DEnv(AbstractMDP):
         #Reward range
         self.reward_range = (-float('inf'), 0.)
 
-        #Maximum episode steps
-        self.max_episode_steps = self.H
-    
 
     def get_observation(self,
                         state,
@@ -69,7 +69,8 @@ class pyLanding1DEnv(AbstractMDP):
 
     def next_state(self,
                    state: Optional[Any], 
-                   control: Any) -> Dict[str, float]:
+                   control: Any,
+                   time_step: float) -> Dict[str, float]:
         """
         Propagate state: integration of system dynamics
         """
@@ -81,7 +82,7 @@ class pyLanding1DEnv(AbstractMDP):
         data = np.array([self.g, control, self.c])
 
         # Integration
-        t_eval = np.array([state['t'], state['t'] + self.dt])
+        t_eval = np.array([state['t'], state['t'] + time_step])
         sol = rk4(dynamics, s, t_eval, data)
 
         #State at next time-step
