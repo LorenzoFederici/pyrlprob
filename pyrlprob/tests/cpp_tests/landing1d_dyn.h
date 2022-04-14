@@ -6,7 +6,7 @@
 class Landing1D_EoM
 {
     private:
-        const double g, c;
+        double g, c;
 
     public:
         Landing1D_EoM(const double g, const double c) : 

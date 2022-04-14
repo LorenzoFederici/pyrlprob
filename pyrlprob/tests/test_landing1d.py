@@ -5,6 +5,7 @@ from typing import *
 import matplotlib.pyplot as plt
 import yaml
 import os
+import time
 
 from pyrlprob.utils.plots import plot_metric
 
@@ -67,6 +68,17 @@ def test_train_eval_cpp(res_dir: Optional[str]=None) -> None:
                                res_dir=res_dir)
 
 
+def make_cpp_lib() -> None:
+    """
+    Create the dynamic library with the environments in c++.
+    """
+
+    __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+    os.system("make -f " + os.path.join(__location__, "Makefile"))
+
+    return
+
+
 def test_landing_env_train(py_or_cpp: str="py",
                            res_dir: Optional[str]=None) -> Tuple[RLProblem, str, List[str], List[int]]:
     """
@@ -82,8 +94,9 @@ def test_landing_env_train(py_or_cpp: str="py",
     if py_or_cpp == "py":
         config = os.path.join(__location__, "landing1d_py.yaml")
     elif py_or_cpp == "cpp":
+        if not any(fname.endswith('.so') for fname in os.listdir(__location__ + "/cpp_tests/")):
+            assert False, "Run 'make_cpp_lib()' first to create the dynamic library, then launch again python."
         config = os.path.join(__location__, "landing1d_cpp.yaml")
-        os.system("make -f " + os.path.join(__location__, "Makefile"))
 
     #Problem definition
     LandingProblem = RLProblem(config)

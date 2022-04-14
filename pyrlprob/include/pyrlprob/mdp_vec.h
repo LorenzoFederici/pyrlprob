@@ -23,7 +23,7 @@ class MDPVectorEnv_cpp {
     using info_type = I;
     using config_type = Co;
     
-    const int num_envs, num_threads;
+    int num_envs, num_threads;
     std::vector<E> envs;
 
     /* Methods */

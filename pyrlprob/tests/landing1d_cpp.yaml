@@ -1,6 +1,6 @@
 run: ppo
 stop:
-  training_iteration: 50
+  training_iteration: 25
 custom_metrics:
 - cstr_viol
 postproc_data:
@@ -10,7 +10,7 @@ postproc_data:
   - m
   - t
   - T
-num_eval_episodes: 10
+num_eval_episodes: 2
 eval_env_config:
   env_config:
     prng_seed: 0

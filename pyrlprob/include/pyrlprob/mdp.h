@@ -32,9 +32,10 @@ class MDPEnv_cpp
     using info_type = I;
     using config_type = Co;
 
-    const std::tuple<double,double> reward_range;
-    const int max_episode_steps, iter0, iterf;
-    const double time_step, epsilon0, epsilonf; 
+    std::tuple<double,double> reward_range;
+    int max_episode_steps;
+    int iter0, iterf;
+    double time_step, epsilon0, epsilonf; 
     double epsilon;
     unsigned int prng_seed;
     std::default_random_engine gen;

@@ -17,8 +17,8 @@ class Landing1DEnv_cpp :
   /* Attributes */
   public:
 
-  const int H;
-  const double h0_min, h0_max, v0_min, v0_max, m0, 
+  int H;
+  double h0_min, h0_max, v0_min, v0_max, m0, 
     tf, hf, vf, Tmax, c, g;
   std::uniform_real_distribution<double> dist_h, dist_v;
   Landing1D_EoM EoM;

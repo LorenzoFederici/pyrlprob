@@ -9,6 +9,7 @@ import os
 import ray
 from ray import tune
 from ray.rllib.models import ModelCatalog
+from ray.rllib.env.vector_env import VectorEnv
 
 from pyrlprob.utils.auxiliary import *
 import pyrlprob.utils.callbacks as callbacks
@@ -173,7 +174,7 @@ def evaluation(trainer_dir: str,
         if not key in metrics_and_data:
             metrics_and_data[key] = []      
                 
-    # Define standard PPO trainer and configs for evaluation
+    # Define standard PG trainer and configs for evaluation
     trainer = ray.rllib.agents.ppo.PPOTrainer
     config = {}
 
@@ -185,6 +186,9 @@ def evaluation(trainer_dir: str,
     tune.register_env(config["env"], lambda config: env(config))
     config["env_config"] = env_config
     env_inst = env(env_config)
+    if (issubclass(type(env_inst), VectorEnv)):
+        env_inst = env_inst.env
+        config["env"] = type(env_inst)
 
     # Model config
     config["model"] = model
@@ -195,18 +199,21 @@ def evaluation(trainer_dir: str,
             custom_model = getattr(mod, model_name)
             ModelCatalog.register_custom_model(model["custom_model"], custom_model)
 
+    #Max episode steps
+    max_episode_steps = env_inst.max_episode_steps
+    
     # General config
     config["num_workers"] = 0
     config["num_envs_per_worker"] = 1
     config["create_env_on_driver"] = True
     config["gamma"] = gamma
-    config["batch_mode"] = "complete_episodes"
-    config["train_batch_size"] = env_inst.max_episode_steps
-    config["rollout_fragment_length"] = env_inst.max_episode_steps
+    config["batch_mode"] = "truncate_episodes"
+    config["train_batch_size"] = max_episode_steps
+    config["rollout_fragment_length"] = max_episode_steps
 
     # PPO config
     config["num_sgd_iter"] = 1
-    config["sgd_minibatch_size"] = 1
+    config["sgd_minibatch_size"] = max_episode_steps
     config["lr"] = 0.
     
     # Evaluation and callbacks config
@@ -222,7 +229,7 @@ def evaluation(trainer_dir: str,
             mod = importlib.import_module(mod_name)
             config["custom_eval_function"] = getattr(mod, fun_name)
     config["callbacks"] = callbacks.EvaluationCallbacks
-    stop = {"training_iteration": 1}
+    stop = {"training_iteration": 0}
 
     # Evaluation
     _, new_best_exp_dir, last_checkpoint  = training(trainer=trainer, 

@@ -94,7 +94,7 @@ std::map<std::string,Landing1DEnv_cpp::state_type>
         std::get<double>(state.at("t")), time_step, control[0]);
 
     // Update state
-    std::map<std::string, std::variant<int,double>> next_state;
+    std::map<std::string, state_type> next_state;
     next_state["h"] = ynew[0];
     next_state["v"] = ynew[1];
     next_state["m"] = ynew[2];
@@ -164,9 +164,9 @@ std::map<std::string,std::map<std::string,std::vector<Landing1DEnv_cpp::info_typ
     if (done)
     {
         info["episode_step_data"]["h"].push_back(std::get<double>(state.at("h")));
-        info["episode_step_data"]["h"].push_back(std::get<double>(state.at("v")));
-        info["episode_step_data"]["h"].push_back(std::get<double>(state.at("m")));
-        info["episode_step_data"]["h"].push_back(std::get<double>(state.at("t")));
+        info["episode_step_data"]["v"].push_back(std::get<double>(state.at("v")));
+        info["episode_step_data"]["m"].push_back(std::get<double>(state.at("m")));
+        info["episode_step_data"]["t"].push_back(std::get<double>(state.at("t")));
         info["episode_step_data"]["T"].push_back(control[0]);
         info["custom_metrics"]["cstr_viol"] = std::vector<double>{std::get<double>(state.at("cstr_viol"))};
     }

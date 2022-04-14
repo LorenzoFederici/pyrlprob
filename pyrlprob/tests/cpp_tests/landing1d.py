@@ -65,14 +65,8 @@ class cppLanding1DVectorEnv(Landing1DVectorEnv_cpp, VectorEnv):
         Class constructor 
         
         Args:
-            num_envs (int): number of environments
-            num_threads (int): number of parallel threads
             config (dict): environment configs
         """
-
-        #Number of envs and parallel threads
-        num_envs = config.pop("num_envs")
-        num_threads = config.pop("num_threads")
 
         #Create env instance
         self.env = cppLanding1DEnv(config)
@@ -80,14 +74,14 @@ class cppLanding1DVectorEnv(Landing1DVectorEnv_cpp, VectorEnv):
         #Initialize parent classes
         Landing1DVectorEnv_cpp.__init__(
             self, 
-            num_envs, 
-            num_threads, 
+            config["num_envs"], 
+            config["num_threads"], 
             config)
         VectorEnv.__init__(
             self,
             observation_space=self.env.observation_space,
             action_space=self.env.action_space,
-            num_envs=num_envs)
+            num_envs=config["num_envs"])
         
 
 
