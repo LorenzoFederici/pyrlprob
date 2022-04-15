@@ -21,7 +21,10 @@ def training(trainer: Union[str, Callable, Type],
              logdir: Optional[str]=None,
              create_out_file: bool=True, 
              load: Optional[Dict[str, Any]]=None, 
-             debug: bool=False) -> Tuple[str, str, int]:
+             debug: bool=False,
+             open_ray: bool=True,
+             return_time: bool=False) -> \
+                Union[Tuple[str, str, int, float], Tuple[str, str, int]]:
     """
     Train the current model with ray.tune, using the specified trainer and configs.
 
@@ -34,11 +37,14 @@ def training(trainer: Union[str, Callable, Type],
         load (dict): dictionary containing the directory and checkpoint where the 
             pre-trained model to load is located
         debug (bool): whether to print worker's logs.
+        open_ray (bool): whether to open/close ray
+        return_time (bool): whether to return run time
     
     Return:
         trainer_dir (str): trainer's output directory
         best_exp_dir (str): directory containing the best experiment's output
         last_checkpoint (int): last checkpoint saved
+        (optional) run_time (float): total run time
     """
 
     #Create output folder
@@ -54,11 +60,12 @@ def training(trainer: Union[str, Callable, Type],
         restore = None
 
     #Initialize ray
-    if debug:
-        logging_level = "INFO"
-    else:
-        logging_level = "ERROR"
-    ray.init(logging_level=logging_level, log_to_driver=debug)
+    if open_ray:
+        if debug:
+            logging_level = "INFO"
+        else:
+            logging_level = "ERROR"
+        ray.init(logging_level=logging_level, log_to_driver=debug)
     
     #Train the model
     start_time = time.time()
@@ -73,6 +80,7 @@ def training(trainer: Union[str, Callable, Type],
                         checkpoint_at_end=True,
                         keep_checkpoints_num=None)
     end_time = time.time()
+    run_time = end_time - start_time
 
     #Last iteration stats
     last_result = analysis.best_result
@@ -90,17 +98,22 @@ def training(trainer: Union[str, Callable, Type],
             % ("# elapsed time [s]", "training_iteration", \
             "episode_reward_mean", "episode_reward_max", "episode_reward_min"))
         f_out_res.write("%22.7f %22d %22.7f %22.7f %22.7f\n" \
-            % (end_time - start_time, last_result["training_iteration"], \
+            % (run_time, last_result["training_iteration"], \
                 last_result["episode_reward_mean"], \
                 last_result["episode_reward_max"], \
                 last_result["episode_reward_min"]))
         f_out_res.close()
 
     #Terminate ray
-    ray.shutdown()
+    if open_ray:
+        ray.shutdown()
 
-    #Return trainer and best experiment directory
-    return trainer_dir, best_exp_dir, last_checkpoint
+    #Return trainer and best experiment directory + last checkpoint saved
+    #and the total run time
+    if return_time:
+        return trainer_dir, best_exp_dir, last_checkpoint, run_time
+    else:
+        return trainer_dir, best_exp_dir, last_checkpoint
 
 
 def evaluation(trainer_dir: str,

@@ -16,17 +16,20 @@ class RLProblem:
     """
 
     def __init__(self, 
-                 config_file: str) -> None:
+                 config_file: Union[str, Dict[str, Any]]) -> None:
         """ 
         Class constructor 
         
         Args:
-            config_file (str): name of the config file (.yaml) that constains the trainer, environment and
-                post-processing settings
+            config_file (str or dict): name of the config file (.yaml) that constains the trainer, environment and
+                post-processing settings or the dictionary with all the information
         """
 
         #Open config file
-        settings = yaml.safe_load(open(config_file))
+        if isinstance(config_file, str):
+            settings = yaml.safe_load(open(config_file))
+        else:
+            settings = config_file
         self.input_config = settings
 
         #Trainer definition
@@ -124,7 +127,10 @@ class RLProblem:
               best_metric: str="episode_reward_mean",
               min_or_max: str="max",
               postprocess: bool=True,
-              debug: bool=False) -> Tuple[str, List[str], List[int], str]:
+              debug: bool=False,
+              open_ray: bool=True,
+              return_time: bool=False) ->  \
+                  Union[Tuple[str, List[str], List[int], str, float], Tuple[str, List[str], List[int], str]]:
         """
         Solve a RL problem.
         It include pre-processing and training, 
@@ -137,21 +143,36 @@ class RLProblem:
             min_or_max (str): if best_metric must be minimized or maximized
             postprocess (bool): whether to do postprocessing
             debug (bool): whether to print worker's logs.
+            open_ray (bool): whether to open/close ray
+            return_time (bool): whether to return run time
         
         Return:
             trainer_dir (str): trainer directory
             exp_dirs (list): experiment directories
             last_cps (list): last checkpoints of the experiments
             best_cp_dir (str): best checkpoint directory
+            (optional) run_time (float): total run time
         """
         
         #Training
-        trainer_dir, best_exp_dir, last_checkpoint = training(trainer=self.trainer, 
-                                                              config=self.config, 
-                                                              stop=self.stop,
-                                                              logdir=logdir,
-                                                              load=self.load,
-                                                              debug=debug)
+        if return_time:
+            trainer_dir, best_exp_dir, last_checkpoint, run_time = training(trainer=self.trainer, 
+                                                                            config=self.config, 
+                                                                            stop=self.stop,
+                                                                            logdir=logdir,
+                                                                            load=self.load,
+                                                                            debug=debug,
+                                                                            open_ray=open_ray,
+                                                                            return_time=return_time)
+        else:
+            trainer_dir, best_exp_dir, last_checkpoint = training(trainer=self.trainer, 
+                                                                  config=self.config, 
+                                                                  stop=self.stop,
+                                                                  logdir=logdir,
+                                                                  load=self.load,
+                                                                  debug=debug,
+                                                                  open_ray=open_ray,
+                                                                  return_time=return_time)
         
         #Save config file
         with open(best_exp_dir + "config.yaml", 'w') as outfile:
@@ -174,7 +195,10 @@ class RLProblem:
                 last_cps = self.load["last_cps"] + last_cps
             best_cp_dir, _ = get_cp_dir_and_model(best_exp_dir, last_checkpoint)
 
-        return trainer_dir, exp_dirs, last_cps, best_cp_dir
+        if return_time:
+            return trainer_dir, exp_dirs, last_cps, best_cp_dir, run_time
+        else:
+            return trainer_dir, exp_dirs, last_cps, best_cp_dir
 
 
     def evaluate(self,
