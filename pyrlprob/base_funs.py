@@ -120,6 +120,7 @@ def evaluation(trainer_dir: str,
                exp_dirs: List[str],
                last_cps: List[int],
                model: Dict[str, Any],
+               framework: str,
                gamma: float,
                env_name: str, 
                env_config: Dict[str, Any],
@@ -140,6 +141,7 @@ def evaluation(trainer_dir: str,
         exp_dirs (list): list with experiments directories
         last_cps (list): list with last checkpoint number of each experiment in exp_dirs
         model (dict): dict with current model configs
+        framework (str): framework used during training (tf or torch)
         gamma (float): disconut factor
         env_name (str): environment class name
         env_config (dict): dictionary containing the environment configs
@@ -203,7 +205,7 @@ def evaluation(trainer_dir: str,
         env_inst = env_inst.env
         config["env"] = type(env_inst)
 
-    # Model config
+    # Model and framework config
     config["model"] = model
     if model["custom_model"] is not None:
         if "." in model["custom_model"]:
@@ -211,6 +213,7 @@ def evaluation(trainer_dir: str,
             mod = importlib.import_module(mod_name)
             custom_model = getattr(mod, model_name)
             ModelCatalog.register_custom_model(model["custom_model"], custom_model)
+    config["framework"] = framework
 
     #Max episode steps
     max_episode_steps = env_inst.max_episode_steps

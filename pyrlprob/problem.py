@@ -61,6 +61,9 @@ class RLProblem:
                 mod = importlib.import_module(mod_name)
                 custom_model = getattr(mod, model_name)
                 ModelCatalog.register_custom_model(self.model["custom_model"], custom_model)
+        
+        #Framework definition
+        self.framework = self.config["framework"]
 
         #Gamma definition
         self.gamma = self.config["gamma"]
@@ -232,6 +235,7 @@ class RLProblem:
                                  exp_dirs=exp_dirs,
                                  last_cps=last_cps,
                                  model=self.model,
+                                 framework=self.framework,
                                  gamma=self.gamma,
                                  env_name=self.env, 
                                  env_config=self.env_config,
