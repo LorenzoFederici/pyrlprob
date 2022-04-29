@@ -245,7 +245,7 @@ def evaluation(trainer_dir: str,
             mod = importlib.import_module(mod_name)
             config["custom_eval_function"] = getattr(mod, fun_name)
     config["callbacks"] = callbacks.EvaluationCallbacks
-    stop = {"training_iteration": 0}
+    stop = {"training_iteration": 1}
 
     # Evaluation
     _, new_best_exp_dir, last_checkpoint  = training(trainer=trainer, 
