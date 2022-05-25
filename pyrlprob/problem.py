@@ -33,9 +33,14 @@ class RLProblem:
         self.input_config = settings
 
         #Trainer definition
-        self.__algorithm = settings["run"]
-        alg_module = importlib.import_module("ray.rllib.agents." + self.__algorithm)
-        self.trainer = getattr(alg_module, self.__algorithm.upper() + "Trainer")
+        if isinstance(settings["run"], dict):
+            self.__method = settings["run"]["method"]
+            self.__algorithm = settings["run"]["algorithm"]
+        else:
+            self.__method = settings["run"]
+            self.__algorithm = self.__method.upper()
+        alg_module = importlib.import_module("ray.rllib.agents." + self.__method)
+        self.trainer = getattr(alg_module, self.__algorithm + "Trainer")
 
         #Stopping criteria definition
         self.stop = settings["stop"]
