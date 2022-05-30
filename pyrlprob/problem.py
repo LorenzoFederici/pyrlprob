@@ -236,7 +236,8 @@ class RLProblem:
         if self.load is not None:
             exp_dirs = self.load["exp_dirs"] + exp_dirs
             last_cps = self.load["last_cps"] + last_cps
-        best_cp_dir = evaluation(trainer_dir=trainer_dir, 
+        best_cp_dir = evaluation(trainer=self.trainer,
+                                trainer_dir=trainer_dir, 
                                  exp_dirs=exp_dirs,
                                  last_cps=last_cps,
                                  model=self.model,

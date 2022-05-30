@@ -116,7 +116,8 @@ def training(trainer: Union[str, Callable, Type],
         return trainer_dir, best_exp_dir, last_checkpoint
 
 
-def evaluation(trainer_dir: str,
+def evaluation(trainer: Union[str, Callable, Type], 
+               trainer_dir: str,
                exp_dirs: List[str],
                last_cps: List[int],
                model: Dict[str, Any],
@@ -137,6 +138,7 @@ def evaluation(trainer_dir: str,
     Evaluate a model, and find the best checkpoint
 
     Args:
+        trainer (str or callable): trainer (i.e., RL algorithm) with which the model was trained
         trainer_dir (str): trainer directory
         exp_dirs (list): list with experiments directories
         last_cps (list): list with last checkpoint number of each experiment in exp_dirs
@@ -189,8 +191,8 @@ def evaluation(trainer_dir: str,
         if not key in metrics_and_data:
             metrics_and_data[key] = []      
                 
-    # Define standard PG trainer and configs for evaluation
-    trainer = ray.rllib.agents.ppo.PPOTrainer
+    # Define trainer and configs for evaluation
+    # trainer = ray.rllib.agents.ppo.PPOTrainer
     config = {}
 
     # Env config
@@ -228,8 +230,6 @@ def evaluation(trainer_dir: str,
     config["rollout_fragment_length"] = max_episode_steps
 
     # PPO config
-    config["num_sgd_iter"] = 1
-    config["sgd_minibatch_size"] = max_episode_steps
     config["lr"] = 0.
     
     # Evaluation and callbacks config
