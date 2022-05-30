@@ -237,12 +237,10 @@ class RLProblem:
             exp_dirs = self.load["exp_dirs"] + exp_dirs
             last_cps = self.load["last_cps"] + last_cps
         best_cp_dir = evaluation(trainer=self.trainer,
-                                trainer_dir=trainer_dir, 
+                                 trainer_dir=trainer_dir, 
                                  exp_dirs=exp_dirs,
                                  last_cps=last_cps,
-                                 model=self.model,
-                                 framework=self.framework,
-                                 gamma=self.gamma,
+                                 config=self.config,
                                  env_name=self.env, 
                                  env_config=self.env_config,
                                  evaluation_num_episodes=self.num_eval_episodes,

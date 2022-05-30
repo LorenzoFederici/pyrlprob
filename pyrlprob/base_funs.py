@@ -120,9 +120,7 @@ def evaluation(trainer: Union[str, Callable, Type],
                trainer_dir: str,
                exp_dirs: List[str],
                last_cps: List[int],
-               model: Dict[str, Any],
-               framework: str,
-               gamma: float,
+               config: Dict[str, Any],
                env_name: str, 
                env_config: Dict[str, Any],
                evaluation_num_episodes: int, 
@@ -142,9 +140,7 @@ def evaluation(trainer: Union[str, Callable, Type],
         trainer_dir (str): trainer directory
         exp_dirs (list): list with experiments directories
         last_cps (list): list with last checkpoint number of each experiment in exp_dirs
-        model (dict): dict with current model configs
-        framework (str): framework used during training (tf or torch)
-        gamma (float): disconut factor
+        config (dict): config file (dictionary)
         env_name (str): environment class name
         env_config (dict): dictionary containing the environment configs
         evaluation_num_episodes (int): number of evaluation episodes
@@ -192,8 +188,6 @@ def evaluation(trainer: Union[str, Callable, Type],
             metrics_and_data[key] = []      
                 
     # Define trainer and configs for evaluation
-    # trainer = ray.rllib.agents.ppo.PPOTrainer
-    config = {}
 
     # Env config
     config["env"] = env_name
@@ -207,16 +201,6 @@ def evaluation(trainer: Union[str, Callable, Type],
         env_inst = env_inst.env
         config["env"] = type(env_inst)
 
-    # Model and framework config
-    config["model"] = model
-    if model["custom_model"] is not None:
-        if "." in model["custom_model"]:
-            mod_name, model_name = model["custom_model"].rsplit('.',1)
-            mod = importlib.import_module(mod_name)
-            custom_model = getattr(mod, model_name)
-            ModelCatalog.register_custom_model(model["custom_model"], custom_model)
-    config["framework"] = framework
-
     #Max episode steps
     max_episode_steps = env_inst.max_episode_steps
     
@@ -224,12 +208,11 @@ def evaluation(trainer: Union[str, Callable, Type],
     config["num_workers"] = 0
     config["num_envs_per_worker"] = 1
     config["create_env_on_driver"] = True
-    config["gamma"] = gamma
     config["batch_mode"] = "truncate_episodes"
     config["train_batch_size"] = max_episode_steps
     config["rollout_fragment_length"] = max_episode_steps
 
-    # PPO config
+    # No learning
     config["lr"] = 0.
     
     # Evaluation and callbacks config
