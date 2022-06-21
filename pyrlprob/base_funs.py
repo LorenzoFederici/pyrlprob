@@ -244,7 +244,7 @@ def evaluation(trainer: Union[str, Callable, Type],
     config["evaluation_interval"] = 1
     config["evaluation_duration"] = evaluation_num_episodes
     config["evaluation_duration_unit"] = "episodes"
-    config["evaluation_parallel_to_training"] = "True"
+    config["evaluation_parallel_to_training"] = True
     config["evaluation_num_workers"] = 1
     config["evaluation_config"] = evaluation_config
     if custom_eval_function is not None:
