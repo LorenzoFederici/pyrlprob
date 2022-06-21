@@ -200,9 +200,7 @@ def evaluation(trainer: Union[str, Callable, Type],
     if (issubclass(type(env_inst), VectorEnv)):
         env_inst = env_inst.env
         config["env"] = type(env_inst)
-
-    #Max episode steps
-    max_episode_steps = env_inst.max_episode_steps
+    # max_episode_steps = env_inst.max_episode_steps # Max episode steps
     
     # General config
     cpus = config["num_cpus_per_worker"]*(config["num_workers"] + config["evaluation_num_workers"]) \
