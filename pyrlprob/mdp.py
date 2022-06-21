@@ -61,6 +61,7 @@ class AbstractMDP(gym.Env):
         self.state = None
         self.time_step = None
         self.max_episode_steps = 999999
+        self.done = False
 
         self.epsilon = 0.
         self.epsilon0 = 0.
@@ -238,6 +239,7 @@ class AbstractMDP(gym.Env):
 
         # Get reward and done signal
         reward, done = self.collect_reward(self.prev_state, self.state, control)
+        self.done = done
 
         # Compute infos
         info = self.get_info(self.prev_state, self.state, observation, control, reward, done)
