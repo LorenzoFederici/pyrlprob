@@ -228,8 +228,7 @@ def evaluation(trainer: Union[str, Callable, Type],
     
     # Evaluation and callbacks config
     config["evaluation_interval"] = 1
-    config["evaluation_duration"] = evaluation_num_episodes
-    config["evaluation_duration_unit"] = "episodes"
+    config["evaluation_num_episodes"] = evaluation_num_episodes
     config["evaluation_parallel_to_training"] = False
     config["evaluation_num_workers"] = 0
     config["evaluation_config"] = evaluation_config
