@@ -207,27 +207,15 @@ def evaluation(trainer: Union[str, Callable, Type],
         + config["num_cpus_for_driver"]
     gpus = config["num_gpus_per_worker"]*(config["num_workers"] + config["evaluation_num_workers"]) \
         + config["num_gpus"]
-    if config["num_gpus_per_worker"] > 0:
-        gpus_per_w = (gpus - config["num_gpus"])/2.
-    else:
-        gpus_per_w = 0.
-    if config["num_cpus_per_worker"] > 0:
-        cpus_per_w = (cpus - config["num_cpus_for_driver"])/2. \
-            if (cpus - config["num_cpus_for_driver"])/2. < 1 else int((cpus - config["num_cpus_for_driver"])/2.)
-    else:
-        cpus_per_w = 0.
-    if config["num_cpus_for_driver"]:
-        cpus_per_d = int(cpus - cpus_per_w*2)
-    else:
-        cpus_per_d = 0
-    config["num_cpus_per_worker"] = cpus_per_w
-    config["num_gpus_per_worker"] = gpus_per_w
-    config["num_cpus_for_driver"] = cpus_per_d
-    config["num_workers"] = 1
+    config["num_cpus_per_worker"] = 0
+    config["num_gpus_per_worker"] = 0
+    config["num_cpus_for_driver"] = cpus
+    config["num_gpus"] = gpus
+    config["num_workers"] = 0
     config["num_envs_per_worker"] = 1
     config["remote_worker_envs"] = False
-    config["create_env_on_driver"] = False
-    config["batch_mode"] = "complete_episodes"
+    config["create_env_on_driver"] = True
+    config["batch_mode"] = "truncate_episodes"
     config["train_batch_size"] = 1 #max_episode_steps
     config["rollout_fragment_length"] = 1 #max_episode_steps
 
@@ -242,8 +230,8 @@ def evaluation(trainer: Union[str, Callable, Type],
     config["evaluation_interval"] = 1
     config["evaluation_duration"] = evaluation_num_episodes
     config["evaluation_duration_unit"] = "episodes"
-    config["evaluation_parallel_to_training"] = True
-    config["evaluation_num_workers"] = 1
+    config["evaluation_parallel_to_training"] = False
+    config["evaluation_num_workers"] = 0
     config["evaluation_config"] = evaluation_config
     if custom_eval_function is not None:
         if callable(custom_eval_function):
