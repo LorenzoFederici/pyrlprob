@@ -65,7 +65,9 @@ def training(trainer: Union[str, Callable, Type],
             logging_level = "INFO"
         else:
             logging_level = "ERROR"
-        ray.init(logging_level=logging_level, log_to_driver=debug)
+        ray.init(logging_level=logging_level, 
+            log_to_driver=debug, 
+            ignore_reinit_error=True)
     
     #Train the model
     start_time = time.time()
