@@ -152,7 +152,7 @@ class RLProblem:
             postprocess (bool): whether to do postprocessing
             debug (bool): whether to print worker's logs.
             open_ray (bool): whether to open/close ray
-            return_time (bool): whether to return run time
+            return_time (bool): whether to return run time per iter
         
         Return:
             trainer_dir (str): trainer directory

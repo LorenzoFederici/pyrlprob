@@ -38,7 +38,7 @@ def training(trainer: Union[str, Callable, Type],
             pre-trained model to load is located
         debug (bool): whether to print worker's logs.
         open_ray (bool): whether to open/close ray
-        return_time (bool): whether to return run time
+        return_time (bool): whether to return run time per iter
     
     Return:
         trainer_dir (str): trainer's output directory
@@ -93,6 +93,9 @@ def training(trainer: Union[str, Callable, Type],
     #Last checkpoint
     last_checkpoint = last_result["training_iteration"]
 
+    #Run time per iter
+    run_time_per_iter = last_result["time_this_iter_s"]
+
     # Save elapsed time and results
     if create_out_file:
         f_out_res = open(best_exp_dir + "result.txt", "w")
@@ -111,9 +114,9 @@ def training(trainer: Union[str, Callable, Type],
         ray.shutdown()
 
     #Return trainer and best experiment directory + last checkpoint saved
-    #and the total run time
+    #and the run time per iter
     if return_time:
-        return trainer_dir, best_exp_dir, last_checkpoint, run_time
+        return trainer_dir, best_exp_dir, last_checkpoint, run_time_per_iter
     else:
         return trainer_dir, best_exp_dir, last_checkpoint
 
