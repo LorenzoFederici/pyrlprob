@@ -208,34 +208,34 @@ def evaluation(trainer: Union[str, Callable, Type],
     # max_episode_steps = env_inst.max_episode_steps # Max episode steps
     
     # General config
-    cpus = config["num_cpus_per_worker"]*(config["num_workers"] + config["evaluation_num_workers"]) \
-        + config["num_cpus_for_driver"]
-    gpus = config["num_gpus_per_worker"]*(config["num_workers"] + config["evaluation_num_workers"]) \
-        + config["num_gpus"]
-    config["num_cpus_per_worker"] = 0
-    config["num_gpus_per_worker"] = 0
-    config["num_cpus_for_driver"] = cpus
-    config["num_gpus"] = gpus
-    config["num_workers"] = 0
-    config["num_envs_per_worker"] = 1
-    config["remote_worker_envs"] = False
-    config["create_env_on_driver"] = True
-    config["batch_mode"] = "truncate_episodes"
-    config["train_batch_size"] = 1 #max_episode_steps
-    config["rollout_fragment_length"] = 1 #max_episode_steps
+    # cpus = config["num_cpus_per_worker"]*(config["num_workers"] + config["evaluation_num_workers"]) \
+    #     + config["num_cpus_for_driver"]
+    # gpus = config["num_gpus_per_worker"]*(config["num_workers"] + config["evaluation_num_workers"]) \
+    #     + config["num_gpus"]
+    # config["num_cpus_per_worker"] = 0
+    # config["num_gpus_per_worker"] = 0
+    # config["num_cpus_for_driver"] = cpus
+    # config["num_gpus"] = gpus
+    # config["num_workers"] = 0
+    # config["num_envs_per_worker"] = 1
+    # config["remote_worker_envs"] = False
+    # config["create_env_on_driver"] = True
+    # config["batch_mode"] = "truncate_episodes"
+    # config["train_batch_size"] = 1 #max_episode_steps
+    # config["rollout_fragment_length"] = 1 #max_episode_steps
 
     # No learning
     config["lr"] = 0.
 
-    # Algorithm-specific parameters
-    if "sgd_minibatch_size" in config.keys():
-        config["sgd_minibatch_size"] = config["train_batch_size"]
+    # # Algorithm-specific parameters
+    # if "sgd_minibatch_size" in config.keys():
+    #     config["sgd_minibatch_size"] = config["train_batch_size"]
     
     # Evaluation and callbacks config
     config["evaluation_interval"] = 1
     config["evaluation_num_episodes"] = evaluation_num_episodes
-    config["evaluation_parallel_to_training"] = False
-    config["evaluation_num_workers"] = 0
+    # config["evaluation_parallel_to_training"] = False
+    # config["evaluation_num_workers"] = 0
     config["evaluation_config"] = evaluation_config
     if custom_eval_function is not None:
         if callable(custom_eval_function):
