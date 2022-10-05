@@ -33,7 +33,7 @@ class pyMDPEnv_cpp : public MDPEnv_cpp<S,A,C,O,I,Co>
     
     const std::vector<C> get_control(
         const std::vector<A>& action,
-        const std::map<std::string,S>& state) override {
+        std::map<std::string,S>& state) override {
             PYBIND11_OVERRIDE_PURE(
                 PYBIND11_TYPE(const std::vector<C>),           /* Return type */
                 Parent,      /* Parent class */

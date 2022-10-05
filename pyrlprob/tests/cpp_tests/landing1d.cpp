@@ -64,7 +64,7 @@ OUTPUT:
 std::vector<Landing1DEnv_cpp::control_type> 
     Landing1DEnv_cpp::get_control(
         const std::vector<Landing1DEnv_cpp::action_type>& action,
-        const std::map<std::string,Landing1DEnv_cpp::state_type>& state)
+        std::map<std::string,Landing1DEnv_cpp::state_type>& state)
 {
     double control = 0.5 * (action[0] + 1.) * Tmax;
 

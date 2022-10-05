@@ -67,7 +67,7 @@ class MDPEnv_cpp
 
     virtual std::vector<control_type> get_control(
         const std::vector<action_type>& action,
-        const std::map<std::string,state_type>& state) = 0;
+        std::map<std::string,state_type>& state) = 0;
 
     virtual std::map<std::string,state_type> next_state(
         const std::map<std::string,state_type>& state, 
