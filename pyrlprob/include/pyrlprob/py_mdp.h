@@ -20,22 +20,26 @@ class pyMDPEnv_cpp : public MDPEnv_cpp<S,A,C,O,I,Co>
 
     /* Trampoline (need one for each virtual function) */
     const std::vector<O> get_observation(
-        const std::map<std::string,S>& state) override {
+        const std::map<std::string,S>& state,
+        const std::vector<C>& control) override {
             PYBIND11_OVERRIDE_PURE(
                 PYBIND11_TYPE(const std::vector<O>),           /* Return type */
                 Parent,      /* Parent class */
                 get_observation,               /* Name of function in C++ (must match Python name) */
-                state                          /* Argument(s) */
+                state,                          /* Argument(s) */
+                control
             );
         }
     
     const std::vector<C> get_control(
-        const std::vector<A>& action) override {
+        const std::vector<A>& action,
+        const std::map<std::string,S>& state) override {
             PYBIND11_OVERRIDE_PURE(
                 PYBIND11_TYPE(const std::vector<C>),           /* Return type */
                 Parent,      /* Parent class */
                 get_control,               /* Name of function in C++ (must match Python name) */
-                action                          /* Argument(s) */
+                action,                          /* Argument(s) */
+                state
             );
         }
     
@@ -73,7 +77,9 @@ class pyMDPEnv_cpp : public MDPEnv_cpp<S,A,C,O,I,Co>
         get_info(
             const std::map<std::string,S>& prev_state,
             std::map<std::string,S>& state,
+            const std::vector<O>& observation,
             const std::vector<C>& control,
+            const double reward,
             const bool done) override {
             PYBIND11_OVERRIDE_PURE(
                 Info,           /* Return type */
@@ -81,7 +87,9 @@ class pyMDPEnv_cpp : public MDPEnv_cpp<S,A,C,O,I,Co>
                 get_info,               /* Name of function in C++ (must match Python name) */
                 prev_state,                          /* Argument(s) */
                 state,
+                observation,
                 control,
+                reward,
                 done
             );
         }

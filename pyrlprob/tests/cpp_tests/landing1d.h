@@ -27,9 +27,11 @@ class Landing1DEnv_cpp :
 
   Landing1DEnv_cpp(const std::map<std::string,config_type>& config);
   std::vector<obs_type> get_observation(
-    const std::map<std::string,state_type>& state);
+    const std::map<std::string,state_type>& state,
+    const std::vector<control_type>& control);
   std::vector<control_type> get_control(
-    const std::vector<action_type>& action);
+    const std::vector<action_type>& action,
+    const std::map<std::string,state_type>& state);
   std::map<std::string,state_type> next_state(
     const std::map<std::string,state_type>& state, 
     const std::vector<control_type>& control,
@@ -42,7 +44,9 @@ class Landing1DEnv_cpp :
     get_info(
       const std::map<std::string,state_type>& prev_state,
       std::map<std::string,state_type>& state,
+      const std::vector<obs_type>& observation,
       const std::vector<control_type>& control,
+      const double reward,
       const bool done
     );
   

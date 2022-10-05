@@ -62,10 +62,12 @@ class MDPEnv_cpp
         };
     
     virtual std::vector<obs_type> get_observation(
-        const std::map<std::string,state_type>& state) = 0;
+        const std::map<std::string,state_type>& state,
+        const std::vector<control_type>& control) = 0;
 
     virtual std::vector<control_type> get_control(
-        const std::vector<action_type>& action) = 0;
+        const std::vector<action_type>& action,
+        const std::map<std::string,state_type>& state) = 0;
 
     virtual std::map<std::string,state_type> next_state(
         const std::map<std::string,state_type>& state, 
@@ -81,7 +83,9 @@ class MDPEnv_cpp
         get_info(
             const std::map<std::string,state_type>& prev_state,
             std::map<std::string,state_type>& state,
+            const std::vector<obs_type>& observation,
             const std::vector<control_type>& control,
+            const double reward,
             const bool done
         ) = 0;
     
@@ -134,13 +138,13 @@ class MDPEnv_cpp
         prev_state = state;
 
         // Get control
-        const std::vector<control_type> control = get_control(action);
+        const std::vector<control_type> control = get_control(action, state);
 
         // Next state
         state = next_state(prev_state, control, time_step);
 
         // Get observation
-        const std::vector<obs_type> observation = get_observation(state);
+        const std::vector<obs_type> observation = get_observation(state, control);
 
         // Get reward and done signal
         double reward;
@@ -149,7 +153,7 @@ class MDPEnv_cpp
 
         // Compute infos
         std::map<std::string, std::map<std::string, std::vector<info_type>>> 
-            info = get_info(prev_state, state, control, done);
+            info = get_info(prev_state, state, observation, control, reward, done);
 
         return std::make_tuple(observation, reward, done, info);
     }

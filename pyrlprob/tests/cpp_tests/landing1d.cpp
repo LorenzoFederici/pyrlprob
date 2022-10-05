@@ -42,7 +42,8 @@ OUTPUT:
 - observation = current observation
 */
 std::vector<Landing1DEnv_cpp::obs_type> Landing1DEnv_cpp::get_observation(
-    const std::map<std::string,Landing1DEnv_cpp::state_type>& state)
+    const std::map<std::string,Landing1DEnv_cpp::state_type>& state,
+    const std::vector<Landing1DEnv_cpp::control_type>& control)
 {
     std::vector<double> observation{
         std::get<double>(state.at("h")),
@@ -62,7 +63,8 @@ OUTPUT:
 */
 std::vector<Landing1DEnv_cpp::control_type> 
     Landing1DEnv_cpp::get_control(
-        const std::vector<Landing1DEnv_cpp::action_type>& action)
+        const std::vector<Landing1DEnv_cpp::action_type>& action,
+        const std::map<std::string,Landing1DEnv_cpp::state_type>& state)
 {
     double control = 0.5 * (action[0] + 1.) * Tmax;
 
@@ -150,7 +152,9 @@ std::map<std::string,std::map<std::string,std::vector<Landing1DEnv_cpp::info_typ
     Landing1DEnv_cpp::get_info(
         const std::map<std::string,Landing1DEnv_cpp::state_type>& prev_state,
         std::map<std::string,Landing1DEnv_cpp::state_type>& state,
+        const std::vector<Landing1DEnv_cpp::obs_type>& observation,
         const std::vector<Landing1DEnv_cpp::control_type>& control,
+        const double reward,
         const bool done
     )
 {
@@ -188,8 +192,11 @@ const std::vector<Landing1DEnv_cpp::obs_type> Landing1DEnv_cpp::reset()
     state["t"] = 0.;
     state["step"] = 0;
 
+    // Control
+    const std::vector<double> control(1, 0.);
+
     // First observation
-    const std::vector<double> observation = this->get_observation(state);
+    const std::vector<double> observation = this->get_observation(state, control);
 
     return observation;
 }
