@@ -61,10 +61,10 @@ class MDPEnv_cpp
            const std::vector<unsigned int> values = this->seed();
         };
     
-    virtual const std::vector<obs_type> get_observation(
+    virtual std::vector<obs_type> get_observation(
         const std::map<std::string,state_type>& state) = 0;
 
-    virtual const std::vector<control_type> get_control(
+    virtual std::vector<control_type> get_control(
         const std::vector<action_type>& action) = 0;
 
     virtual std::map<std::string,state_type> next_state(

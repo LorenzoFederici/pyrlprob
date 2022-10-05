@@ -26,9 +26,9 @@ class Landing1DEnv_cpp :
   /* Methods */
 
   Landing1DEnv_cpp(const std::map<std::string,config_type>& config);
-  const std::vector<obs_type> get_observation(
+  std::vector<obs_type> get_observation(
     const std::map<std::string,state_type>& state);
-  const std::vector<control_type> get_control(
+  std::vector<control_type> get_control(
     const std::vector<action_type>& action);
   std::map<std::string,state_type> next_state(
     const std::map<std::string,state_type>& state, 

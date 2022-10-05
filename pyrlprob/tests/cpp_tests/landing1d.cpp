@@ -41,10 +41,10 @@ INPUT:
 OUTPUT:
 - observation = current observation
 */
-const std::vector<Landing1DEnv_cpp::obs_type> Landing1DEnv_cpp::get_observation(
+std::vector<Landing1DEnv_cpp::obs_type> Landing1DEnv_cpp::get_observation(
     const std::map<std::string,Landing1DEnv_cpp::state_type>& state)
 {
-    const std::vector<double> observation{
+    std::vector<double> observation{
         std::get<double>(state.at("h")),
         std::get<double>(state.at("v")),
         std::get<double>(state.at("m")),
@@ -60,11 +60,11 @@ INPUT:
 OUTPUT:
 - control = current control
 */
-const std::vector<Landing1DEnv_cpp::control_type> 
+std::vector<Landing1DEnv_cpp::control_type> 
     Landing1DEnv_cpp::get_control(
         const std::vector<Landing1DEnv_cpp::action_type>& action)
 {
-    const double control = 0.5 * (action[0] + 1.) * Tmax;
+    double control = 0.5 * (action[0] + 1.) * Tmax;
 
     return std::vector<double>(1, control);
 }
