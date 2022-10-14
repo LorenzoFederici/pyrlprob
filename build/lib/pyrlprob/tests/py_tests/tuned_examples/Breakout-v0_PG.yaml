@@ -1,0 +1,17 @@
+config:
+  batch_mode: truncate_episodes
+  env: Breakout-v0
+  framework: tf
+  ignore_worker_failures: true
+  lr: 0.0005
+  model:
+    vf_share_layers: true
+  num_cpus_for_driver: 1
+  num_cpus_per_worker: 1
+  num_gpus: 0
+  num_workers: 7
+  rollout_fragment_length: 100
+  train_batch_size: 7000
+run: pg
+stop:
+  training_iteration: 500

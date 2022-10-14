@@ -1,0 +1,21 @@
+config:
+  batch_mode: truncate_episodes
+  entropy_coeff: 0
+  env: Breakout-v0
+  framework: tf
+  ignore_worker_failures: true
+  lr: 0.0005
+  num_cpus_for_driver: 1
+  num_cpus_per_worker: 1
+  num_gpus: 0
+  num_workers: 7
+  sample_async: false
+  train_batch_size: 7000
+  rollout_fragment_length: 100
+  batch_mode: truncate_episodes
+  clip_rewards: True
+  model:
+      vf_share_layers: true
+run: a3c
+stop:
+  training_iteration: 500

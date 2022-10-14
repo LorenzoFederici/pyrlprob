@@ -1,0 +1,70 @@
+run: ppo
+stop:
+  training_iteration: 25
+custom_metrics:
+- cstr_viol
+postproc_data:
+  episode_step_data: 
+  - h
+  - v
+  - m
+  - t
+  - T
+num_eval_episodes: 2
+eval_env_config:
+  env_config:
+    prng_seed: 0
+config:
+  num_workers: 0
+  num_envs_per_worker: 1
+  num_gpus: 0
+  num_cpus_per_worker: 0
+  num_gpus_per_worker: 0
+  num_cpus_for_driver: 4
+  create_env_on_driver: True
+  rollout_fragment_length: 40
+  batch_mode: complete_episodes
+  train_batch_size: 1920
+  model:
+    fcnet_hiddens: [64, 64]
+    fcnet_activation: tanh
+    vf_share_layers: False
+    free_log_std: True
+  gamma: 1.
+  log_level: INFO
+  framework: tf
+  explore: True
+  ignore_worker_failures: True
+  evaluation_interval: 1
+  evaluation_num_episodes: 1
+  evaluation_config:
+    explore: False
+  evaluation_num_workers: 0
+  use_critic: True
+  use_gae: True
+  lambda: 1.
+  kl_coeff: 0.
+  sgd_minibatch_size: 240
+  shuffle_sequences: True
+  num_sgd_iter: 10
+  lr: 1.0e-04
+  vf_loss_coeff: 0.5
+  clip_param: 0.2
+  callbacks:
+    TrainingCallbacks
+  env: pyrlprob.tests.cpp_tests.cppLanding1DVectorEnv
+  env_config:
+    num_envs: 12
+    num_threads: 6
+    H: 40
+    h0_min: 0.8
+    h0_max: 1.2
+    v0_min: -0.85
+    v0_max: -0.75
+    m0: 1.0
+    tf: 1.397
+    hf: 0.0
+    vf: 0.0
+    Tmax: 1.227
+    c: 2.349
+    g: 1.0

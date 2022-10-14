@@ -1,0 +1,38 @@
+config:
+  Q_model:
+      hidden_activation: relu
+      hidden_layer_sizes: [512]
+  policy_model:
+      hidden_activation: relu
+      hidden_layer_sizes: [512]
+  # Do hard syncs.
+  # Soft-syncs seem to work less reliably for discrete action spaces.
+  tau: 1.0
+  target_network_update_freq: 7000
+  # auto = 0.98 * -log(1/|A|)
+  target_entropy: auto
+  clip_rewards: 1.0
+  no_done_at_end: False
+  n_step: 1
+  rollout_fragment_length: 7
+  prioritized_replay: true
+  train_batch_size: 56
+  timesteps_per_iteration: 7000
+  buffer_size: 210000
+  # Paper uses 20k random timesteps, which is not exactly the same, but
+  # seems to work nevertheless. We use 100k here for the longer Atari
+  # runs (DQN style: filling up the buffer a bit before learning).
+  learning_starts: 21000
+  optimization:
+      actor_learning_rate: 0.0003
+      critic_learning_rate: 0.0003
+      entropy_learning_rate: 0.0003
+  num_workers: 7
+  num_gpus: 0
+  num_cpus_for_driver: 1
+  num_cpus_per_worker: 1
+  metrics_smoothing_episodes: 7
+  env: Breakout-v0
+run: sac
+stop:
+  training_iteration: 500

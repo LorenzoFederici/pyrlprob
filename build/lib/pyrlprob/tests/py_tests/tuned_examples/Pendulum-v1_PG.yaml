@@ -1,0 +1,23 @@
+config:
+  batch_mode: complete_episodes
+  env: Pendulum-v1
+  framework: tf
+  horizon: 200
+  ignore_worker_failures: true
+  lr: 0.01
+  model:
+    fcnet_activation: tanh
+    fcnet_hiddens:
+    - 32
+    - 32
+    free_log_std: true
+    vf_share_layers: false
+  num_cpus_for_driver: 1
+  num_cpus_per_worker: 1
+  num_gpus: 0
+  num_workers: 7
+  rollout_fragment_length: 200
+  train_batch_size: 5600
+run: pg
+stop:
+  training_iteration: 100

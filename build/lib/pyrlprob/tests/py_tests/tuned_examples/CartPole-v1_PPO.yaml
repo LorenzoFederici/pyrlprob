@@ -1,0 +1,29 @@
+config:
+  batch_mode: complete_episodes
+  clip_param: 0.2
+  entropy_coeff: 0.0
+  env: CartPole-v1
+  framework: tf
+  horizon: 400
+  ignore_worker_failures: true
+  kl_coeff: 0
+  lr: 0.001
+  model:
+    fcnet_activation: tanh
+    fcnet_hiddens:
+    - 32
+    - 32
+    free_log_std: true
+    vf_share_layers: false
+  num_cpus_for_driver: 1
+  num_cpus_per_worker: 1
+  num_gpus: 0
+  num_sgd_iter: 20
+  num_workers: 7
+  rollout_fragment_length: 400
+  sgd_minibatch_size: 800
+  shuffle_sequences: true
+  train_batch_size: 5600
+run: ppo
+stop:
+  training_iteration: 100

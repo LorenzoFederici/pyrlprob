@@ -1,0 +1,32 @@
+config:
+  actor_hidden_activation: tanh
+  actor_hiddens:
+  - 32
+  - 32
+  actor_lr: 0.001
+  batch_mode: complete_episodes
+  buffer_size: 500000
+  critic_hidden_activation: tanh
+  critic_hiddens:
+  - 32
+  - 32
+  critic_lr: 0.1
+  env: pyrlprob.tests.landing1d.Landing1DEnv
+  framework: tf
+  horizon: 20
+  ignore_worker_failures: true
+  learning_starts: 2800
+  num_cpus_for_driver: 1
+  num_cpus_per_worker: 1
+  num_gpus: 0
+  num_workers: 7
+  policy_delay: 2
+  rollout_fragment_length: 20
+  target_network_update_freq: 2
+  tau: 0.1
+  timesteps_per_iteration: 20
+  train_batch_size: 5600
+  twin_q: true
+run: ddpg
+stop:
+  training_iteration: 100
