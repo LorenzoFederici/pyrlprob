@@ -46,12 +46,6 @@ class cppLanding1DEnv(Landing1DEnv_cpp, gym.Env):
 
         Landing1DEnv_cpp.__init__(self, config)
 
-        # # Observation space
-        # self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float64)
-
-        # # Action space
-        # self.action_space = spaces.Box(low=-1., high=1., shape=(1,), dtype=np.float32)
-
 
 class cppLanding1DVectorEnv(Landing1DVectorEnv_cpp, VectorEnv):
     """Vectorized version of the Landing1DEnv on multi-CPU processors.
@@ -68,8 +62,6 @@ class cppLanding1DVectorEnv(Landing1DVectorEnv_cpp, VectorEnv):
             config (dict): environment configs
         """
 
-        # #Create env instance
-        # self.env = cppLanding1DEnv(config)
 
         #Initialize parent classes
         Landing1DVectorEnv_cpp.__init__(

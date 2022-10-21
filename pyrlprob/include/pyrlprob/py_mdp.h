@@ -16,13 +16,15 @@ class pyMDPEnv_cpp : public MDPEnv_cpp<S,A,C,O,I,Co>
     typedef MDPEnv_cpp<S,A,C,O,I,Co> Parent;
     typedef std::map<std::string,S> State;
     typedef std::map<std::string,std::map<std::string,std::vector<I>>> Info;
+    typedef std::vector<O> Observation;
+    typedef std::vector<C> Control;
 
     /* Trampoline (need one for each virtual function) */
     std::vector<O> get_observation(
         const std::map<std::string,S>& state,
         const std::vector<C>& control) override {
             PYBIND11_OVERRIDE_PURE(
-                PYBIND11_TYPE(const std::vector<O>),           /* Return type */
+                Observation,           /* Return type */
                 Parent,      /* Parent class */
                 get_observation,               /* Name of function in C++ (must match Python name) */
                 state,                          /* Argument(s) */
@@ -34,7 +36,7 @@ class pyMDPEnv_cpp : public MDPEnv_cpp<S,A,C,O,I,Co>
         const std::vector<A>& action,
         std::map<std::string,S>& state) override {
             PYBIND11_OVERRIDE_PURE(
-                PYBIND11_TYPE(const std::vector<C>),           /* Return type */
+                Control,           /* Return type */
                 Parent,      /* Parent class */
                 get_control,               /* Name of function in C++ (must match Python name) */
                 action,                          /* Argument(s) */
@@ -95,7 +97,7 @@ class pyMDPEnv_cpp : public MDPEnv_cpp<S,A,C,O,I,Co>
     
     const std::vector<O> reset() override {
             PYBIND11_OVERRIDE_PURE(
-                const std::vector<O>,           /* Return type */
+                const Observation,          /* Return type */
                 Parent,      /* Parent class */
                 reset               /* Name of function in C++ (must match Python name) */
             );
