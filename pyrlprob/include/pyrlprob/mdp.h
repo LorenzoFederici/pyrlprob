@@ -144,11 +144,11 @@ class MDPEnv_cpp
         std::map<std::string,std::map<std::string,std::vector<info_type>>>> 
         step(const std::vector<action_type>& action)
     {
-        // Previous state
-        prev_state = state;
-
         // Get control
         const std::vector<control_type> control = get_control(action, state);
+
+        // Previous state
+        prev_state = state;
 
         // Next state
         state = next_state(prev_state, control, time_step);
