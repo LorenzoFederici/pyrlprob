@@ -5,6 +5,7 @@ from typing import *
 from itertools import islice
 import importlib
 import os
+import multiprocessing
 
 import ray
 from ray import tune
@@ -222,6 +223,16 @@ def evaluation(trainer: Union[str, Callable, Type],
             config["custom_eval_function"] = getattr(mod, fun_name)
     config["callbacks"] = callbacks.EvaluationCallbacks
     stop = {"training_iteration": 1}
+
+    # Set the correct number of cpus/gpus for evaluation
+    config["num_gpus_per_worker"] = 0
+    config["num_gpus"] = 0
+    total_w = config["num_workers"] + config["evaluation_num_workers"]
+    cpus_count = config["num_cpus_per_worker"]*total_w + config["num_cpus_for_driver"]
+    cpus_machine = multiprocessing.cpu_count()
+    if cpus_count > cpus_machine:
+        config["num_cpus_per_worker"] = (cpus_machine - 1.)/total_w if (cpus_machine - 1.)/total_w < 1 else int((cpus_machine - 1.)/total_w)
+        config["num_cpus_for_driver"] = int(cpus_machine - config["num_cpus_per_worker"]*total_w)
 
     # Evaluation
     _, new_best_exp_dir, last_checkpoint  = training(trainer=trainer, 
