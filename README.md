@@ -1,3 +1,5 @@
+<img align="center" src="https://github.com/LorenzoFederici/pyrlprob/blob/main/logo.png?raw=true" width="500" />
+
 <div align="center"> <h1><b> pyRLprob </b></div>
 
 <div align="center">
