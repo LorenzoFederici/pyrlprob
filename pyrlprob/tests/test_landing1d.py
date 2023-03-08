@@ -5,7 +5,7 @@ from typing import *
 import matplotlib.pyplot as plt
 import yaml
 import os
-import time
+import matplotlib
 
 from pyrlprob.utils.plots import plot_metric
 
@@ -147,6 +147,8 @@ def test_landing_env_train_eval(py_or_cpp: str="py",
 
     #Plot of metric trend
     plt.style.use("seaborn")
+    plt.style.use("seaborn")
+    matplotlib.rc('font', size=20)
     fig = plot_metric("episode_reward",
                       exp_dirs,
                       last_cps)

@@ -8,6 +8,7 @@ pyrlprob/utils/__pycache__/
 .pytest_cache/
 pyrlprob.egg-info/
 dist/
+build/
 results/
 test_gym.py
 .DS_Store
