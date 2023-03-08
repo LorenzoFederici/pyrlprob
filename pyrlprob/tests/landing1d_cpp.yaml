@@ -1,6 +1,6 @@
 run: ppo
 stop:
-  training_iteration: 25
+  training_iteration: 100
 custom_metrics:
 - cstr_viol
 postproc_data:

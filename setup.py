@@ -5,10 +5,10 @@ this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
 setup(name='pyrlprob',
-    version='1.8.8',
+    version='1.9.0',
     author='Lorenzo Federici',
     author_email = 'federicilorenzo94@gmail.com',
-    description = 'Train easily Gym-derived environments in python/C++ through Ray RLlib',
+    description = 'Train Gym-derived environments in python/C++ through Ray RLlib',
     long_description = long_description,
     long_description_content_type = 'text/markdown',
     url = 'https://github.com/LorenzoFederici/pyrlprob',
@@ -19,7 +19,7 @@ setup(name='pyrlprob',
     ],
     install_requires = [
         'dm-tree',
-        'gym',
+        'gym==0.21.0',
         'lz4',
         'matplotlib',
         'numpy',
@@ -38,5 +38,5 @@ setup(name='pyrlprob',
         'PyYAML'
     ],
     packages = find_packages(),
-    python_requires = '>=3.7',
+    python_requires = '>=3.9',
     include_package_data = True)
