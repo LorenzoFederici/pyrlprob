@@ -143,7 +143,7 @@ def test_landing_env_train_eval(py_or_cpp: str="py",
     config_new = os.path.join(__location__, "landing1d_load.yaml")
     LandingProblemPretrained = RLProblem(config_new)
     trainer_dir, exp_dirs, last_cps, _ = \
-        LandingProblemPretrained.solve()
+        LandingProblemPretrained.solve(debug=True)
 
     #Plot of metric trend
     plt.style.use("seaborn")

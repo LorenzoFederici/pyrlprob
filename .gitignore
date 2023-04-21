@@ -10,6 +10,6 @@ pyrlprob.egg-info/
 dist/
 build/
 results/
-test_gym.py
+*_test.py
 .DS_Store
 *.sh

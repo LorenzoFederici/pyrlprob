@@ -80,6 +80,7 @@ class EvaluationCallbacks(DefaultCallbacks):
 
         #Info and done returned by the episode
         info = episode.last_info_for()
+        print("doing eval step callback")
 
         if info is not None:
             if "episode_step_data" in info:
@@ -111,12 +112,15 @@ class EvaluationCallbacks(DefaultCallbacks):
 
         #Info and done returned by the episode
         info = episode.last_info_for()
+        print("doing eval end callback")
 
         if info is not None:
             if "episode_step_data" in info:
+                print("episode_step_data end callback")
                 for key in info["episode_step_data"].keys():
                     episode.hist_data[key] = episode.user_data[key]
                     episode.hist_data[key + "_length"] = [len(episode.user_data[key])]
+                    print("episode_step_data end callback: data added")
             if "episode_end_data" in info:
                 for key, item in info["episode_end_data"].items():
                     if isinstance(item, Iterable):
