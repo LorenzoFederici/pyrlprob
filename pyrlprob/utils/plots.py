@@ -10,6 +10,7 @@ def plot_metric(metric_name: str,
                 last_checkpoints: List[int],
                 window: int = 1,
                 step: int = 1,
+                factor: float = 1.,
                 fig: Optional[Callable] = None,
                 label: Optional[str] = None,
                 color: Optional[str] = None) -> Callable:
@@ -22,6 +23,7 @@ def plot_metric(metric_name: str,
         last_checkpoints (list): list with the last checkpoints of the experiments
         window (int): window to evaluate the moving average
         step (int): plot points every step steps
+        factor (float): factor to multiply the metric values
         fig (callable): figure object
         label (str): the label of the plotted curve
         color (str): color of the curve (if None -> random color)
@@ -65,8 +67,8 @@ def plot_metric(metric_name: str,
         fig = plt.figure()
         fig.set_size_inches(9.7,6.4)
     ax = fig.gca()
-    ax.plot(training_iter_mov[::step], metric_mean_mov[::step], '-', linewidth='2.5', color=color, label=label)
+    ax.plot(training_iter_mov[::step], metric_mean_mov[::step]*factor, '-', linewidth='2.5', color=color, label=label)
     if metric_min !=  None:
-        plt.fill_between(training_iter_mov[::step], metric_std_min_mov[::step], metric_std_max_mov[::step], alpha=0.3, color=color)
+        plt.fill_between(training_iter_mov[::step], metric_std_min_mov[::step]*factor, metric_std_max_mov[::step]*factor, alpha=0.3, color=color)
     
     return fig
