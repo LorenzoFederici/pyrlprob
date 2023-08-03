@@ -95,6 +95,11 @@ def column_progress(filename: str,
 
     data = pd.read_csv(filename) 
     head = data.head(last_row)
+
+    #Check if the column is the keys of head
+    if column not in head.keys():
+        return None
+    
     column_data = list(head[column])
 
     return column_data
@@ -115,6 +120,11 @@ def metric_training_trend(metric_name: str,
         metric_trend (list): list with the values of the metric
     """
 
+    check = column_progress(experiment_dirs[0]+"progress.csv", \
+            metric_name, last_checkpoints[0])
+    if check is None:
+        return None
+    
     metric_trend = []
     for exp_num, exp_dir in enumerate(experiment_dirs):
         metric_trend = metric_trend + column_progress(exp_dir+"progress.csv", \

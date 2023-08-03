@@ -33,22 +33,15 @@ def plot_metric(metric_name: str,
     """
 
     #Retrieve metric min, mean and max trend
-    if "_mean" in metric_name:
-        metric_mean = metric_training_trend(metric_name,
+    metric_min = metric_training_trend(metric_name + "_min",
+                                    experiment_dirs,
+                                    last_checkpoints)
+    metric_mean = metric_training_trend(metric_name + "_mean",
                                         experiment_dirs,
                                         last_checkpoints)
-        metric_min = None
-        metric_max = None
-    else:
-        metric_min = metric_training_trend(metric_name + "_min",
-                                        experiment_dirs,
-                                        last_checkpoints)
-        metric_mean = metric_training_trend(metric_name + "_mean",
-                                            experiment_dirs,
-                                            last_checkpoints)
-        metric_max = metric_training_trend(metric_name + "_max",
-                                        experiment_dirs,
-                                        last_checkpoints)
+    metric_max = metric_training_trend(metric_name + "_max",
+                                    experiment_dirs,
+                                    last_checkpoints)
 
     #Training iterations
     training_iter = [i for i in range(len(metric_mean))]
