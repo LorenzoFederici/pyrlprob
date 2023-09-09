@@ -154,7 +154,7 @@ def evaluation(trainer: Union[str, Callable, Type],
         env_name (str): environment class name
         env_config (dict): dictionary containing the environment configs
         evaluation_duration (int): duration of the evaluation
-        evaluation_duration_unit (str): unit of the evaluation duration (episodes or steps)
+        evaluation_duration_unit (str): unit of the evaluation duration (episodes or timesteps)
         evaluation_config (dict): dictionary containing the evaluation configs
         custom_eval_function (callable or str): Custom evaluation function (or function name)
         best_metric (str): metric to be used to determine the best checkpoint in exp_dirs

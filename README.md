@@ -35,7 +35,7 @@ test_train_eval_py()
 If the code exits without errors, a folder named `results/` with the test results will be created in your current directory.
 
 ## User Guide
-[Latest user guide](https://drive.google.com/file/d/1bNs2g50cxtmAGhhB1_Kf3hX8pdkbCplZ/view?usp=share_link).
+[Latest user guide](https://drive.google.com/file/d/14mgqCG5RgBC00MZTR-c8pI0SL5cOw3gl/view?usp=sharing).
 
 ## Credits
 pyRLprob has been created by [Lorenzo Federici](https://github.com/LorenzoFederici) in 2021.
