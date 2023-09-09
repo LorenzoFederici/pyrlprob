@@ -3,7 +3,7 @@ from typing import *
 import numpy as np
 import pandas as pd
 import random
-import gym
+import gymnasium as gym
 import tensorflow as tf
 import torch
 import collections.abc
@@ -15,7 +15,7 @@ def update(d, u):
     """
 
     for k, v in u.items():
-        if isinstance(v, collections.abc.Mapping):
+        if isinstance(v, collections.abc.Mapping) and d.get(k) is not None:
             d[k] = update(d.get(k, {}), v)
         else:
             d[k] = v
@@ -52,7 +52,7 @@ def get_cp_dir_and_model(logdir: str,
     """
 
     cp_dir = logdir + "checkpoint_" + str(cp).zfill(6) + "/"
-    cp_model = cp_dir + "checkpoint-" + str(cp)
+    cp_model = cp_dir + "algorithm_state.pkl"
 
     assert (os.path.exists(cp_dir)), "Folder %s does not exist!." % (cp_dir)
 

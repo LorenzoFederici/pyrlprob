@@ -2,8 +2,8 @@ import numpy as np
 from numpy.random import uniform
 from typing import *
 
-import gym
-from gym import spaces
+import gymnasium as gym
+from gymnasium import spaces
 
 from pyrlprob.tests.py_tests.landing1d_dyn import *
 
@@ -114,61 +114,81 @@ class pyLanding1DEnvGym(gym.Env):
     
 
     def collect_reward(self,
-                       prev_state: Optional[Any]=None, 
-                       state: Optional[Any]=None, 
-                       control: Optional[Any]=None) -> Tuple[float, bool]:
+                    prev_state: Optional[Any]=None, 
+                    state: Optional[Any]=None, 
+                    control: Optional[Any]=None) -> Tuple[float, bool, bool]:
         """
-        Get current reward and done signal.
+        Get current reward and terminated/truncated signals.
         """
 
-        done = False
+        terminated = False
+        truncated = False
 
         reward = state["m"] - prev_state["m"]
 
         if state["step"] == self.H:
-            done = True
+            terminated = True
         if not self.success:
-            done = True
+            truncated = True
         if state["h"] <= 0. or state["m"] <= 0.:
-            done = True
+            truncated = True
         
-        if done:
+        if terminated or truncated:
             cstr_viol = max(abs(state["h"] - self.hf), abs(state["v"] - self.vf) - 0.005)
             state["cstr_viol"] = max(cstr_viol, 0.)
 
             reward = reward - 10.*cstr_viol
         
-        return reward, done
+        return reward, terminated, truncated
     
 
     def get_info(self,
-                 prev_state: Optional[Any]=None,
-                 state: Optional[Any]=None,
-                 observation: Optional[Any]=None,
-                 control: Optional[Any]=None,
-                 reward: Optional[float]=None,
-                 done: Optional[bool]=None) -> Dict[str, float]:
+                 prev_state,
+                 state,
+                 observation,
+                 control,
+                 reward,
+                 done) -> Dict[str, float]:
         """
         Get current info.
         """
 
         info = {}
         info["episode_step_data"] = {}
-        info["episode_step_data"]["h"] = [prev_state["h"]] 
-        info["episode_step_data"]["v"] = [prev_state["v"]] 
-        info["episode_step_data"]["m"] = [prev_state["m"]] 
-        info["episode_step_data"]["t"] = [prev_state["t"]] 
+        info["episode_step_data"]["h"] = [state["h"]] 
+        info["episode_step_data"]["v"] = [state["v"]] 
+        info["episode_step_data"]["m"] = [state["m"]] 
+        info["episode_step_data"]["t"] = [state["t"]] 
         info["episode_step_data"]["T"] = [control]
         if done:
             info["custom_metrics"] = {}
-            info["episode_step_data"]["h"].append(state["h"]) 
-            info["episode_step_data"]["v"].append(state["v"]) 
-            info["episode_step_data"]["m"].append(state["m"]) 
-            info["episode_step_data"]["t"].append(state["t"]) 
-            info["episode_step_data"]["T"].append(control)
+            info["episode_end_data"] = {}
             info["custom_metrics"]["cstr_viol"] = state["cstr_viol"]
+            info["episode_end_data"]["hf"] = [state["h"]]
+            info["episode_end_data"]["vf"] = [state["v"]]
+            info["episode_end_data"]["mf"] = [state["m"]]
 
         return info
+    
+
+    def reset(self, seed=None, options=None) -> Tuple[np.ndarray, Dict[str, any]]:
+        """ 
+        Reset the environment
+        """
+
+        self.state = {}
+        self.state["h"] = uniform(self.h0_min, self.h0_max)
+        self.state["v"] = uniform(self.v0_min, self.v0_max)
+        self.state["m"] = self.m0
+        self.state["t"] = 0.
+        self.state["step"] = 0
+
+        control = 0.
+
+        observation = self.get_observation(self.state, control)
+        info = self.get_info(self.state, self.state, observation, control, 0., False)
+
+        return observation, info
     
 
     def step(self, action):
@@ -189,37 +209,19 @@ class pyLanding1DEnvGym(gym.Env):
         control = self.get_control(action, self.prev_state)
 
         # Next state
-        self.state = self.next_state(self.prev_state, control)
+        self.state = self.next_state(self.prev_state, control, self.time_step)
 
         # Get observation
         observation = self.get_observation(self.state, control)
 
         # Get reward and done signal
-        reward, done = self.collect_reward(self.prev_state, self.state, control)
+        reward, terminated, truncated = self.collect_reward(self.prev_state, self.state, control)
+        self.done = terminated or truncated
 
         # Compute infos
-        info = self.get_info(self.prev_state, self.state, observation, control, reward, done)
+        info = self.get_info(self.prev_state, self.state, observation, control, reward, self.done)
 
-        return observation, float(reward), done, info
-    
-
-    def reset(self) -> np.ndarray:
-        """ 
-        Reset the environment
-        """
-
-        self.state = {}
-        self.state["h"] = uniform(self.h0_min, self.h0_max)
-        self.state["v"] = uniform(self.v0_min, self.v0_max)
-        self.state["m"] = self.m0
-        self.state["t"] = 0.
-        self.state["step"] = 0
-
-        control = 0.
-
-        observation = self.get_observation(self.state, control)
-
-        return observation
+        return observation, float(reward), terminated, truncated, info
     
 
     def render(self, mode='human'):

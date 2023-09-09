@@ -1,4 +1,4 @@
-import gym
+import gymnasium as gym
 
 import numpy as np
 from typing import *
@@ -7,14 +7,15 @@ from pyrlprob.utils.auxiliary import *
 
 class AbstractMDP(gym.Env):
     """
-    Abstract Markov Decision Process, based on OpenAI Gym.
+    Abstract Markov Decision Process, based on OpenAI Gymnasium.
     It encapsulates an environment (MDP) with
     arbitrary behind-the-scenes dynamics. The MDP can be
-    partially or fully-observed. The control can differ from the returned action.
-    An epsilon-constraint law is already implemented in this class,
-    and can be called in derived classes.
+    partially or fully-observed. The actual control can differ from the action
+    returned by the agent. 
+    An epsilon-constraint law for constraint handling
+    is already implemented in this class, and can be called in derived classes.
 
-    The main API methods that users of this class need to know and implement are:
+    The main API methods that users of this class shall implement are:
         get_observation
         get_control
         next_state
@@ -149,7 +150,7 @@ class AbstractMDP(gym.Env):
     def collect_reward(self,
                        prev_state: Optional[Any]=None, 
                        state: Optional[Any]=None, 
-                       control: Optional[Any]=None) -> Tuple[float, bool]:
+                       control: Optional[Any]=None) -> Tuple[float, bool, bool]:
         """
         Get current reward and done signal.
 
@@ -160,7 +161,8 @@ class AbstractMDP(gym.Env):
             
         Return:
             reward (float): current reward
-            done (bool): is episode done?
+            terminated (bool): if the episode is terminated (final state reached)
+            truncated (bool): if the episode is truncated (maximum number of steps / out of bounds)
 
         """
 
@@ -238,13 +240,13 @@ class AbstractMDP(gym.Env):
         observation = self.get_observation(self.state, control)
 
         # Get reward and done signal
-        reward, done = self.collect_reward(self.prev_state, self.state, control)
-        self.done = done
+        reward, terminated, truncated = self.collect_reward(self.prev_state, self.state, control)
+        self.done = terminated or truncated
 
         # Compute infos
-        info = self.get_info(self.prev_state, self.state, observation, control, reward, done)
+        info = self.get_info(self.prev_state, self.state, observation, control, reward, self.done)
 
-        return observation, float(reward), done, info
+        return observation, float(reward), terminated, truncated, info
     
 
     def render(self, mode='human'):

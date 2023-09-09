@@ -2,7 +2,8 @@ from typing import *
 from collections.abc import Iterable
 
 import ray
-from ray.rllib.agents.callbacks import DefaultCallbacks
+from ray.rllib.algorithms.callbacks import DefaultCallbacks
+from ray.rllib.env.base_env import _DUMMY_AGENT_ID
 from ray.rllib.env import BaseEnv
 from ray.rllib.evaluation import MultiAgentEpisode, RolloutWorker
 from ray.rllib.policy import Policy
@@ -26,7 +27,7 @@ class TrainingCallbacks(DefaultCallbacks):
         """
 
         #Info returned by the episode
-        info = episode.last_info_for()
+        info = episode._last_infos.get(_DUMMY_AGENT_ID)
         if info is not None:
             if "custom_metrics" in info:
                 for key, item in info["custom_metrics"].items():
@@ -79,7 +80,7 @@ class EvaluationCallbacks(DefaultCallbacks):
         """
 
         #Info and done returned by the episode
-        info = episode.last_info_for()
+        info = episode._last_infos.get(_DUMMY_AGENT_ID)
 
         if info is not None:
             if "episode_step_data" in info:
@@ -110,7 +111,7 @@ class EvaluationCallbacks(DefaultCallbacks):
         """
 
         #Info and done returned by the episode
-        info = episode.last_info_for()
+        info = episode._last_infos.get(_DUMMY_AGENT_ID)
 
         if info is not None:
             if "episode_step_data" in info:

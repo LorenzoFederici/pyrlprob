@@ -8,7 +8,7 @@ import os
 import multiprocessing
 
 import ray
-from ray import tune
+from ray import air, tune
 from ray.rllib.models import ModelCatalog
 from ray.rllib.env.vector_env import VectorEnv
 
@@ -72,16 +72,19 @@ def training(trainer: Union[str, Callable, Type],
     
     #Train the model
     start_time = time.time()
-    analysis = tune.run(trainer,
+    analysis = tune.run(run_or_experiment=trainer,
                         config=config,
-                        local_dir=outdir,
+                        storage_path=outdir,
                         restore=restore,
                         stop=stop,
                         metric="training_iteration",
                         mode="max",
-                        checkpoint_freq=1,
-                        checkpoint_at_end=True,
-                        keep_checkpoints_num=None)
+                        checkpoint_config=air.CheckpointConfig(
+                            checkpoint_frequency=1,
+                            checkpoint_score_attribute="episode_reward_mean",
+                            checkpoint_score_order="max",
+                            checkpoint_at_end=True)
+                        )
     end_time = time.time()
     run_time = end_time - start_time
 
@@ -129,7 +132,7 @@ def evaluation(trainer: Union[str, Callable, Type],
                config: Dict[str, Any],
                env_name: str, 
                env_config: Dict[str, Any],
-               evaluation_num_episodes: int, 
+               evaluation_duration: int, 
                evaluation_config: Dict[str, Any],
                custom_eval_function: Optional[Union[Callable, str]]=None,
                best_metric: str="episode_reward_mean",
@@ -149,7 +152,7 @@ def evaluation(trainer: Union[str, Callable, Type],
         config (dict): config file (dictionary)
         env_name (str): environment class name
         env_config (dict): dictionary containing the environment configs
-        evaluation_num_episodes (int): number of evaluation episodes
+        evaluation_duration (int): duration of the evaluation
         evaluation_config (dict): dictionary containing the evaluation configs
         custom_eval_function (callable or str): Custom evaluation function (or function name)
         best_metric (str): metric to be used to determine the best checkpoint in exp_dirs
@@ -214,20 +217,20 @@ def evaluation(trainer: Union[str, Callable, Type],
     config["create_env_on_driver"] = False
     config["evaluation_interval"] = 1
     config["evaluation_num_workers"] = max(config["evaluation_num_workers"], 1)
-    if evaluation_num_episodes % config["num_envs_per_worker"]:
-        if evaluation_num_episodes % config["evaluation_num_workers"]:
-            config["evaluation_num_episodes"] = evaluation_num_episodes
+    if evaluation_duration % config["num_envs_per_worker"]:
+        if evaluation_duration % config["evaluation_num_workers"]:
+            config["evaluation_duration"] = evaluation_duration
             config["num_envs_per_worker"] = 1
             config["evaluation_num_workers"] = 1
         else:
-            config["evaluation_num_episodes"] = evaluation_num_episodes
+            config["evaluation_duration"] = evaluation_duration
             config["num_envs_per_worker"] = 1
     else:
-        if evaluation_num_episodes % config["evaluation_num_workers"]:
-            config["evaluation_num_episodes"] = int(evaluation_num_episodes/config["num_envs_per_worker"])
+        if evaluation_duration % config["evaluation_num_workers"]:
+            config["evaluation_duration"] = int(evaluation_duration/config["num_envs_per_worker"])
             config["evaluation_num_workers"] = 1
         else:
-            config["evaluation_num_episodes"] = int(evaluation_num_episodes/config["num_envs_per_worker"])
+            config["evaluation_duration"] = int(evaluation_duration/config["num_envs_per_worker"])
         
     config["evaluation_config"] = evaluation_config
     if custom_eval_function is not None:
@@ -243,12 +246,12 @@ def evaluation(trainer: Union[str, Callable, Type],
     # Set the correct number of cpus/gpus for evaluation
     config["num_gpus_per_worker"] = 0
     config["num_gpus"] = 0
-    total_w = config["num_workers"] + config["evaluation_num_workers"]
-    cpus_count = config["num_cpus_per_worker"]*total_w + config["num_cpus_for_driver"]
+    total_w = config["num_rollout_workers"] + config["evaluation_num_workers"]
+    cpus_count = config["num_cpus_per_worker"]*total_w + config["num_cpus_for_local_worker"]
     cpus_machine = multiprocessing.cpu_count()
     if cpus_count > cpus_machine:
         config["num_cpus_per_worker"] = (cpus_machine - 1.)/total_w if (cpus_machine - 1.)/total_w < 1 else int((cpus_machine - 1.)/total_w)
-        config["num_cpus_for_driver"] = int(cpus_machine - config["num_cpus_per_worker"]*total_w)
+        config["num_cpus_for_local_worker"] = int(cpus_machine - config["num_cpus_per_worker"]*total_w)
 
     # Evaluation
     _, new_best_exp_dir, last_checkpoint  = training(trainer=trainer, 

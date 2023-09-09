@@ -39,14 +39,15 @@ class RLProblem:
         else:
             self.__method = settings["run"]
             self.__algorithm = self.__method.upper()
-        alg_module = importlib.import_module("ray.rllib.agents." + self.__method)
-        self.trainer = getattr(alg_module, self.__algorithm + "Trainer")
+        alg_module = importlib.import_module("ray.rllib.algorithms." + self.__method)
+        alg_config = getattr(alg_module, self.__algorithm + "Config")
+        self.trainer = self.__algorithm
 
         #Stopping criteria definition
         self.stop = settings["stop"]
 
         #Config definition
-        self.config = alg_module.DEFAULT_CONFIG.copy()
+        self.config = alg_config().to_dict() #change to alg_moduleCONFIG().to_dict()
         update(self.config, settings["config"])
 
         #Evironment definition
@@ -81,9 +82,9 @@ class RLProblem:
             mod = importlib.import_module(mod_name)
             self.config["custom_eval_function"] = getattr(mod, fun_name)
         self.custom_eval_function = self.config["custom_eval_function"]
-        self.num_eval_episodes = 1
-        if "num_eval_episodes" in settings:
-            self.num_eval_episodes = settings["num_eval_episodes"]
+        self.evaluation_duration = 1
+        if "evaluation_duration" in settings:
+            self.evaluation_duration = settings["evaluation_duration"]
         self.eval_env_config = {}
         if "eval_env_config" in settings:
             self.eval_env_config = settings["eval_env_config"]
@@ -243,7 +244,7 @@ class RLProblem:
                                  config=self.config,
                                  env_name=self.env, 
                                  env_config=self.env_config,
-                                 evaluation_num_episodes=self.num_eval_episodes,
+                                 evaluation_duration=self.evaluation_duration,
                                  evaluation_config=self.evaluation_config, 
                                  custom_eval_function=self.custom_eval_function, 
                                  best_metric=best_metric,
