@@ -47,7 +47,7 @@ class RLProblem:
         self.stop = settings["stop"]
 
         #Config definition
-        self.config = alg_config().to_dict() #change to alg_moduleCONFIG().to_dict()
+        self.config = alg_config().to_dict()
         update(self.config, settings["config"])
 
         #Evironment definition
@@ -74,7 +74,7 @@ class RLProblem:
         #Gamma definition
         self.gamma = self.config["gamma"]
 
-        #Evaluation config definition
+        #Evaluation during training
         self.evaluation = bool(self.config["evaluation_interval"])
         self.evaluation_config = copy.deepcopy(self.config["evaluation_config"])
         if self.config["custom_eval_function"] is not None:
@@ -82,13 +82,18 @@ class RLProblem:
             mod = importlib.import_module(mod_name)
             self.config["custom_eval_function"] = getattr(mod, fun_name)
         self.custom_eval_function = self.config["custom_eval_function"]
-        self.evaluation_duration = 1
-        if "evaluation_duration" in settings:
-            self.evaluation_duration = settings["evaluation_duration"]
-        self.eval_env_config = {}
-        if "eval_env_config" in settings:
-            self.eval_env_config = settings["eval_env_config"]
-        update(self.evaluation_config, self.eval_env_config)
+        self.final_evaluation_duration = 1
+        self.final_evaluation_duration_unit = "episodes"
+        if "final_evaluation_duration" in settings:
+            self.final_evaluation_duration = settings["final_evaluation_duration"]
+            self.final_evaluation_duration_unit = settings["final_evaluation_duration_unit"]
+
+        #Final evaluation
+        self.final_evaluation_config = {}
+        if "final_evaluation" in settings:
+            if settings["final_evaluation"]:
+                self.final_evaluation_config = settings["final_evaluation_config"]
+        update(self.evaluation_config, self.final_evaluation_config)
         if "record_env" in self.evaluation_config:
             if self.evaluation_config["record_env"] and \
                 isinstance(self.evaluation_config["record_env"], str):
@@ -244,7 +249,8 @@ class RLProblem:
                                  config=self.config,
                                  env_name=self.env, 
                                  env_config=self.env_config,
-                                 evaluation_duration=self.evaluation_duration,
+                                 evaluation_duration=self.final_evaluation_duration,
+                                 evaluation_duration_unit=self.final_evaluation_duration_unit,
                                  evaluation_config=self.evaluation_config, 
                                  custom_eval_function=self.custom_eval_function, 
                                  best_metric=best_metric,

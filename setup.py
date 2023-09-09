@@ -5,10 +5,10 @@ this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
 setup(name='pyrlprob',
-    version='3.0.0',
+    version='3.0.1',
     author='Lorenzo Federici',
     author_email = 'federicilorenzo94@gmail.com',
-    description = 'Train Gym-derived environments in Python/C++ through Ray RLlib',
+    description = 'Train Gym-based environments via RL in Python/C++ through Ray RLlib',
     long_description = long_description,
     long_description_content_type = 'text/markdown',
     url = 'https://github.com/LorenzoFederici/pyrlprob',

@@ -17,8 +17,10 @@ postproc_data:
   - vf
   - mf
 
-num_eval_episodes: 10
-eval_env_config:
+final_evaluation: True
+final_evaluation_duration: 10
+final_evaluation_duration_unit: episodes
+final_evaluation_config:
   env_config:
     prng_seed: 0
 

@@ -133,6 +133,7 @@ def evaluation(trainer: Union[str, Callable, Type],
                env_name: str, 
                env_config: Dict[str, Any],
                evaluation_duration: int, 
+               evaluation_duration_unit: str,
                evaluation_config: Dict[str, Any],
                custom_eval_function: Optional[Union[Callable, str]]=None,
                best_metric: str="episode_reward_mean",
@@ -153,6 +154,7 @@ def evaluation(trainer: Union[str, Callable, Type],
         env_name (str): environment class name
         env_config (dict): dictionary containing the environment configs
         evaluation_duration (int): duration of the evaluation
+        evaluation_duration_unit (str): unit of the evaluation duration (episodes or steps)
         evaluation_config (dict): dictionary containing the evaluation configs
         custom_eval_function (callable or str): Custom evaluation function (or function name)
         best_metric (str): metric to be used to determine the best checkpoint in exp_dirs
@@ -214,7 +216,7 @@ def evaluation(trainer: Union[str, Callable, Type],
     config["lr"] = 0.
 
     # Evaluation and callbacks config
-    config["create_env_on_driver"] = False
+    config["create_env_on_local_worker"] = False
     config["evaluation_interval"] = 1
     config["evaluation_num_workers"] = max(config["evaluation_num_workers"], 1)
     if evaluation_duration % config["num_envs_per_worker"]:
@@ -231,7 +233,7 @@ def evaluation(trainer: Union[str, Callable, Type],
             config["evaluation_num_workers"] = 1
         else:
             config["evaluation_duration"] = int(evaluation_duration/config["num_envs_per_worker"])
-        
+    config["evaluation_duration_unit"] = evaluation_duration_unit
     config["evaluation_config"] = evaluation_config
     if custom_eval_function is not None:
         if callable(custom_eval_function):
