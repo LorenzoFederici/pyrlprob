@@ -48,7 +48,7 @@ class epsConstraintCallbacks(TrainingCallbacks):
 
     def on_train_result(self, 
                          *, 
-                         trainer, 
+                         algorithm, 
                          result: dict, 
                          **kwargs) -> None:
         """
@@ -59,7 +59,7 @@ class epsConstraintCallbacks(TrainingCallbacks):
 
         training_iter = result["training_iteration"]
         
-        trainer.workers.foreach_worker(
+        algorithm.workers.foreach_worker(
             lambda ev: ev.foreach_env(
                 lambda env: env.set_cstr_tolerance(training_iter)))
 
