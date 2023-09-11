@@ -5,7 +5,9 @@ import ray
 from ray.rllib.algorithms.callbacks import DefaultCallbacks
 from ray.rllib.env.base_env import _DUMMY_AGENT_ID
 from ray.rllib.env import BaseEnv
-from ray.rllib.evaluation import MultiAgentEpisode, RolloutWorker
+from ray.rllib.evaluation import RolloutWorker
+from ray.rllib.evaluation.episode import Episode
+from ray.rllib.evaluation.episode_v2 import EpisodeV2 
 from ray.rllib.policy import Policy
 
 
@@ -16,8 +18,11 @@ class TrainingCallbacks(DefaultCallbacks):
     """
 
     def on_episode_end(self, 
-                       *, worker: RolloutWorker, base_env: BaseEnv,
-                       policies: Dict[str, Policy], episode: MultiAgentEpisode,
+                       *, 
+                       worker: RolloutWorker, 
+                       base_env: BaseEnv,
+                       policies: Dict[str, Policy], 
+                       episode: Union[Episode, EpisodeV2],
                        env_index: int, 
                        **kwargs) -> None:
         """
@@ -70,7 +75,8 @@ class EvaluationCallbacks(DefaultCallbacks):
                         *, 
                         worker: RolloutWorker, 
                         base_env: BaseEnv,
-                        episode: MultiAgentEpisode, 
+                        policies: Dict[str, Policy],
+                        episode: Union[Episode, EpisodeV2], 
                         env_index: int, 
                         **kwargs) -> None:
         """
@@ -79,7 +85,7 @@ class EvaluationCallbacks(DefaultCallbacks):
         Args: -> check DefaultCallbacks class
         """
 
-        #Info and done returned by the episode
+        #Info returned by the episode
         info = episode._last_infos.get(_DUMMY_AGENT_ID)
 
         if info is not None:
@@ -98,10 +104,11 @@ class EvaluationCallbacks(DefaultCallbacks):
     
 
     def on_episode_end(self, 
-                       *, worker: RolloutWorker, 
+                       *, 
+                       worker: RolloutWorker, 
                        base_env: BaseEnv,
                        policies: Dict[str, Policy], 
-                       episode: MultiAgentEpisode,
+                       episode: Union[Episode, EpisodeV2],
                        env_index: int, 
                        **kwargs) -> None:
         """
@@ -110,7 +117,7 @@ class EvaluationCallbacks(DefaultCallbacks):
         Args: -> check DefaultCallbacks class
         """
 
-        #Info and done returned by the episode
+        #Info returned by the episode
         info = episode._last_infos.get(_DUMMY_AGENT_ID)
 
         if info is not None:

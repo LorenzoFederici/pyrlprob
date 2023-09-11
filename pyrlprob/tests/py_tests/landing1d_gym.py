@@ -155,14 +155,21 @@ class pyLanding1DEnvGym(gym.Env):
 
         info = {}
         info["episode_step_data"] = {}
-        info["episode_step_data"]["h"] = [state["h"]] 
-        info["episode_step_data"]["v"] = [state["v"]] 
-        info["episode_step_data"]["m"] = [state["m"]] 
-        info["episode_step_data"]["t"] = [state["t"]] 
+        info["episode_step_data"]["h"] = [prev_state["h"]] 
+        info["episode_step_data"]["v"] = [prev_state["v"]] 
+        info["episode_step_data"]["m"] = [prev_state["m"]] 
+        info["episode_step_data"]["t"] = [prev_state["t"]] 
         info["episode_step_data"]["T"] = [control]
         if done:
             info["custom_metrics"] = {}
             info["episode_end_data"] = {}
+
+            info["episode_step_data"]["h"].append(state["h"]) 
+            info["episode_step_data"]["v"].append(state["v"]) 
+            info["episode_step_data"]["m"].append(state["m"]) 
+            info["episode_step_data"]["t"].append(state["t"]) 
+            info["episode_step_data"]["T"].append(control)
+
             info["custom_metrics"]["cstr_viol"] = state["cstr_viol"]
             info["episode_end_data"]["hf"] = [state["h"]]
             info["episode_end_data"]["vf"] = [state["v"]]
