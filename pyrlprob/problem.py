@@ -92,7 +92,8 @@ class RLProblem:
         self.final_evaluation_config = {}
         if "final_evaluation" in settings:
             if settings["final_evaluation"]:
-                self.final_evaluation_config = settings["final_evaluation_config"]
+                if "final_evaluation_config" in settings:
+                    self.final_evaluation_config = settings["final_evaluation_config"]
         update(self.evaluation_config, self.final_evaluation_config)
         if "record_env" in self.evaluation_config:
             if self.evaluation_config["record_env"] and \

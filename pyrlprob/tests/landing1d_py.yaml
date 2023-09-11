@@ -99,7 +99,7 @@ config:
   log_level: INFO
   
   callbacks:
-    TrainingCallbacks
+    epsConstraintCallbacks
   
   #resources:
   num_gpus: 0
