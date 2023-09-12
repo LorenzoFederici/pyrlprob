@@ -64,11 +64,17 @@ class AbstractMDP(gym.Env):
         self.max_episode_steps = 999999
         self.done = False
 
-        self.epsilon = 0.
-        self.epsilon0 = 0.
-        self.epsilonf = 0.
-        self.iter0 = 0
-        self.iterf = 1
+        if hasattr(self, 'eps_schedule'):
+            self.iter0 = self.eps_schedule[0][0]
+            self.epsilon0 = self.eps_schedule[0][1]
+            self.iterf = self.eps_schedule[1][0]
+            self.epsilonf = self.eps_schedule[1][1]
+        else:
+            self.iter0 = 0
+            self.epsilon0 = 0.
+            self.iterf = 1
+            self.epsilonf = 0.
+        self.epsilon = self.epsilon0
 
         if hasattr(self, 'prng_seed'):
             seeds = self.seed(self.prng_seed)
