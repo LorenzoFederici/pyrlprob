@@ -102,7 +102,7 @@ def test_landing_env_train(py_or_cpp: str="py",
     LandingProblem = RLProblem(config)
 
     #Training
-    trainer_dir, exp_dirs, last_cps, _ = \
+    _, trainer_dir, exp_dirs, last_cps, _ = \
         LandingProblem.solve(res_dir, 
                              evaluate=False, 
                              postprocess=False,
@@ -142,7 +142,7 @@ def test_landing_env_train_eval(py_or_cpp: str="py",
     #Training, evaluation and postprocessing of pre-trained model
     config_new = os.path.join(__location__, "landing1d_load.yaml")
     LandingProblemPretrained = RLProblem(config_new)
-    trainer_dir, exp_dirs, last_cps, _ = \
+    _, trainer_dir, exp_dirs, last_cps, _ = \
         LandingProblemPretrained.solve(debug=False)
 
     #Plot of metric trend

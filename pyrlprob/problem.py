@@ -145,7 +145,8 @@ class RLProblem:
               debug: bool=False,
               open_ray: bool=True,
               return_time: bool=False) ->  \
-                  Union[Tuple[str, List[str], List[int], str, float], Tuple[str, List[str], List[int], str]]:
+                  Union[Tuple[Dict[str, Any], str, List[str], List[int], str, float], \
+                        Tuple[Dict[str, Any], str, List[str], List[int], str]]:
         """
         Solve a RL problem.
         It include pre-processing and training, 
@@ -162,6 +163,7 @@ class RLProblem:
             return_time (bool): whether to return run time per iter
         
         Return:
+            best_result (str): best result of the experiment
             trainer_dir (str): trainer directory
             exp_dirs (list): experiment directories
             last_cps (list): last checkpoints of the experiments
@@ -171,7 +173,7 @@ class RLProblem:
         
         #Training
         if return_time:
-            trainer_dir, best_exp_dir, last_checkpoint, run_time = training(trainer=self.trainer, 
+            best_result, trainer_dir, best_exp_dir, last_checkpoint, run_time = training(trainer=self.trainer, 
                                                                             config=self.config, 
                                                                             stop=self.stop,
                                                                             logdir=logdir,
@@ -180,7 +182,7 @@ class RLProblem:
                                                                             open_ray=open_ray,
                                                                             return_time=return_time)
         else:
-            trainer_dir, best_exp_dir, last_checkpoint = training(trainer=self.trainer, 
+            best_result, trainer_dir, best_exp_dir, last_checkpoint = training(trainer=self.trainer, 
                                                                   config=self.config, 
                                                                   stop=self.stop,
                                                                   logdir=logdir,
@@ -211,9 +213,9 @@ class RLProblem:
             best_cp_dir, _ = get_cp_dir_and_model(best_exp_dir, last_checkpoint)
 
         if return_time:
-            return trainer_dir, exp_dirs, last_cps, best_cp_dir, run_time
+            return best_result, trainer_dir, exp_dirs, last_cps, best_cp_dir, run_time
         else:
-            return trainer_dir, exp_dirs, last_cps, best_cp_dir
+            return best_result, trainer_dir, exp_dirs, last_cps, best_cp_dir
 
 
     def evaluate(self,

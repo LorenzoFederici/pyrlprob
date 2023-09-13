@@ -55,7 +55,7 @@ def test_multiple_gym_envs(envs: List[str]=["CartPole-v1"],
             Problem = RLProblem(config)
 
             #Training
-            _, exp_dirs, last_cps, _ = \
+            _, _, exp_dirs, last_cps, _ = \
                 Problem.solve(res_dir_env, 
                               evaluate=False, 
                               postprocess=False)
