@@ -95,10 +95,10 @@ class RLProblem:
                 if "final_evaluation_config" in settings:
                     self.final_evaluation_config = settings["final_evaluation_config"]
         update(self.evaluation_config, self.final_evaluation_config)
-        if "record_env" in self.evaluation_config:
-            if self.evaluation_config["record_env"] and \
-                isinstance(self.evaluation_config["record_env"], str):
-                os.makedirs(self.evaluation_config["record_env"], exist_ok=True)
+        # if "record_env" in self.evaluation_config:
+        #     if self.evaluation_config["record_env"] and \
+        #         isinstance(self.evaluation_config["record_env"], str):
+        #         os.makedirs(self.evaluation_config["record_env"], exist_ok=True)
 
         #Custom metrics
         self.custom_metrics = []
