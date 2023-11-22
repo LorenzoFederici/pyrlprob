@@ -1,37 +1,10 @@
-#Finds the best combination of cpu/gpu to set in the config file
-import argparse
-from ast import For
 import os
-import platform
 from sympy import divisors
 import yaml
-import ray
 from pyrlprob.problem import RLProblem
 
-def main():
-
-    # Input config file and parameters
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--config', type=str, default="config.yaml", \
-        help='Input file with algorithm, model and environment config')
-    parser.add_argument('--cpus', type=float, default=32.0, \
-        help='Number of CPUs available')
-    parser.add_argument('--gpus', type=int, default=1, \
-        help='Number of GPUs available')
-    parser.add_argument('--envs', type=int, default=100, \
-        help='Number of environments')
-    parser.add_argument('--min_w', type=int, default=1, \
-        help='Minimum number of workers')
-    parser.add_argument('--max_w', type=int, default=50, \
-        help='Maximum number of workers')
-    args = parser.parse_args()
-    config_file = args.config
-    cpus = args.cpus
-    gpus = args.gpus
-    envs = args.envs
-    min_w = args.min_w
-    max_w = args.max_w
-
+def tune_workers_envs(config_file, cpus, gpus, envs, min_w, max_w):
+    
     config = yaml.safe_load(open(config_file))
 
     # Tests
@@ -46,8 +19,6 @@ def main():
     f_log.write("%20s %20s %20s %20s %20s %20s %20s %20s %20s %20s\n" \
         % ("# hardware", "workers", "envs_per_worker", \
         "eval_workers", "eval_epis", "cpus_per_w", "gpus_per_w", "cpus_per_d", "gpus_per_d", "time[s]"))
-
-    ray.init(logging_level="ERROR", log_to_driver=False)
 
     # Run simulation
     for h in hardware:
@@ -112,10 +83,7 @@ def main():
                 % (h, w, int(envs / w), eval_w, eval_epis, cpus_per_w, gpus_per_w, cpus_per_d, gpus_per_d, run_time))
             
             print("Done case: w = %d, cpu_per_w = %4.3f" % (w, cpus_per_w))
-
+        
     f_log.close()
-    ray.shutdown()
 
-
-if __name__ == "__main__":
-    main()
+    return
