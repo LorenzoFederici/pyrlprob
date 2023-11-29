@@ -222,20 +222,14 @@ def evaluation(trainer: Union[str, Callable, Type],
     config["create_env_on_local_worker"] = False
     config["evaluation_interval"] = 1
     config["evaluation_num_workers"] = max(config["evaluation_num_workers"], 1)
+    config["evaluation_duration"] = evaluation_duration
     if evaluation_duration % config["num_envs_per_worker"]:
+        config["num_envs_per_worker"] = 1
         if evaluation_duration % config["evaluation_num_workers"]:
-            config["evaluation_duration"] = evaluation_duration
-            config["num_envs_per_worker"] = 1
             config["evaluation_num_workers"] = 1
-        else:
-            config["evaluation_duration"] = evaluation_duration
-            config["num_envs_per_worker"] = 1
     else:
         if evaluation_duration % config["evaluation_num_workers"]:
-            config["evaluation_duration"] = int(evaluation_duration/config["num_envs_per_worker"])
             config["evaluation_num_workers"] = 1
-        else:
-            config["evaluation_duration"] = int(evaluation_duration/config["num_envs_per_worker"])
     config["evaluation_duration_unit"] = evaluation_duration_unit
     config["evaluation_config"] = evaluation_config
     if custom_eval_function is not None:
