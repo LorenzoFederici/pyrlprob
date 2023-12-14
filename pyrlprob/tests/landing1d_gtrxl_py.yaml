@@ -39,14 +39,26 @@ config:
   num_sgd_iter: 10
   vf_loss_coeff: 0.5
   entropy_coeff: 0.
-  clip_param: 0.3
+  clip_param: 0.2
   vf_clip_param: 10.0
 
   model:
-    fcnet_hiddens: [64, 64]
-    fcnet_activation: tanh
-    vf_share_layers: False
-    free_log_std: True
+    custom_model: GTrXLforMetaRL
+    custom_model_config:
+      num_transformer_units: 1
+      attention_dim: 32
+      num_heads: 2
+      head_dim: 16
+      memory_inference: 20
+      position_wise_mlp_dim: 32
+      init_gru_gate_bias: 2.0
+
+      encoder_hiddens: [64, 64]
+      encoder_activation: tanh
+      vf_hiddens: [64, 64]
+      vf_activation: tanh
+      last_n_obs_to_vf: True
+    max_seq_len: 20
   
   #environment:
   env: pyrlprob.tests.py_tests.pyLanding1DEnv
@@ -79,14 +91,14 @@ config:
   ignore_worker_failures: True
 
   #evaluation:
-  evaluation_interval: 1
-  evaluation_duration: 2
-  evaluation_duration_unit: episodes
-  evaluation_parallel_to_training: True
-  evaluation_config:
-    explore: False
-  evaluation_num_workers: 2
-  always_attach_evaluation_results: True
+  # evaluation_interval: 1
+  # evaluation_duration: 2
+  # evaluation_duration_unit: episodes
+  # evaluation_parallel_to_training: True
+  # evaluation_config:
+  #   explore: False
+  # evaluation_num_workers: 2
+  # always_attach_evaluation_results: True
   
   #exploration:
   explore: True

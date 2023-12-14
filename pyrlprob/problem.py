@@ -8,6 +8,7 @@ from ray.rllib.models import ModelCatalog
 
 from pyrlprob.base_funs import *
 from pyrlprob.utils import update
+from pyrlprob.models import models
 
 
 class RLProblem:
@@ -62,6 +63,10 @@ class RLProblem:
         #Model definition
         self.model = self.config["model"]
         if self.model["custom_model"] is not None:
+            if self.model["custom_model"] in ["FCModelforRNNs", "LSTMforMetaRL", "GTrXLforMetaRL"]:
+                custom_model = getattr(models, self.model["custom_model"])
+                self.model["custom_model"] = "pyrlprob.models." + self.model["custom_model"]
+
             if "." in self.model["custom_model"]:
                 mod_name, model_name = self.model["custom_model"].rsplit('.',1)
                 mod = importlib.import_module(mod_name)
@@ -94,11 +99,10 @@ class RLProblem:
             if settings["final_evaluation"]:
                 if "final_evaluation_config" in settings:
                     self.final_evaluation_config = settings["final_evaluation_config"]
-        update(self.evaluation_config, self.final_evaluation_config)
-        # if "record_env" in self.evaluation_config:
-        #     if self.evaluation_config["record_env"] and \
-        #         isinstance(self.evaluation_config["record_env"], str):
-        #         os.makedirs(self.evaluation_config["record_env"], exist_ok=True)
+        if self.evaluation_config is not None and self.evaluation_config != {}:
+            update(self.evaluation_config, self.final_evaluation_config)
+        else:
+            self.evaluation_config = self.final_evaluation_config
 
         #Custom metrics
         self.custom_metrics = []

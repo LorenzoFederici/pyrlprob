@@ -1,3 +1,4 @@
 from pyrlprob.tests import *
 
-test_train_eval_py()
+test_train_py()
+
