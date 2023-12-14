@@ -1,7 +1,7 @@
-from pyrlprob.models.models import FCModelforRNNs, LSTMforMetaRL, GTrXLforMetaRL
+from pyrlprob.models.models import FCModelforRNNs, MLPplusLSTM, MLPplusGTrXL
 
 __all__ = [
     "FCModelforRNNs",
-    "LSTMforMetaRL",
-    "GTrXLforMetaRL"
+    "MLPplusLSTM",
+    "MLPplusGTrXL"
 ]

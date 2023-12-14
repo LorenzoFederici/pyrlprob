@@ -43,7 +43,7 @@ config:
   vf_clip_param: 10.0
 
   model:
-    custom_model: GTrXLforMetaRL
+    custom_model: MLPplusGTrXL
     custom_model_config:
       num_transformer_units: 1
       attention_dim: 32
@@ -55,9 +55,12 @@ config:
 
       encoder_hiddens: [64, 64]
       encoder_activation: tanh
+
       vf_hiddens: [64, 64]
       vf_activation: tanh
-      last_n_obs_to_vf: True
+
+    vf_share_layers: False
+    free_log_std: True
     max_seq_len: 20
   
   #environment:

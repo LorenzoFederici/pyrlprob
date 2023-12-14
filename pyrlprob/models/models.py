@@ -134,19 +134,24 @@ class FCModelforRNNs(TFModelV2):
         return tf.reshape(self._value_out, [-1])
 
 
-class LSTMforMetaRL(RecurrentNetwork):
-    """LSTM-based model for meta-RL. The policy model is made up of an encoder and an LSTM cell.
+class MLPplusLSTM(RecurrentNetwork):
+    """LSTM-based model for meta-RL. The policy model is made up of an MLP encoder and an LSTM cell.
      The encoder is a simple feedforward network that preprocesses the observation before sending
      it to the LSTM cell. The LSTM cell is a standard LSTM cell that outputs the logits.
      The value function estimate is computed by a separate feedforward network that takes the
      same observation as input.
 
      Args:
-        lstm_cell_size (int): The size of the LSTM cell.
-        encoder_hiddens (list): The sizes of the hidden layers of the encoder.
-        encoder_activation (str): The activation function of the encoder.
-        vf_hiddens (list): The sizes of the hidden layers of the value function.
-        vf_activation (str): The activation function of the value function.
+        custom_model_kwargs:
+            lstm_cell_size (int): The size of the LSTM cell.
+            encoder_hiddens (list): The sizes of the hidden layers of the encoder.
+            encoder_activation (str): The activation function of the encoder.
+            vf_hiddens (list): The sizes of the hidden layers of the value function.
+            vf_activation (str): The activation function of the value function.
+        model_config:
+            max_seq_len (int): The maximum length of the input observation sequence.
+            vf_share_layers (bool): Whether to share the layers of the value function with the policy.
+            free_log_std (bool): Whether to generate free-floating bias variables for the second half of the model outputs.
       """
 
     def __init__(
@@ -158,8 +163,8 @@ class LSTMforMetaRL(RecurrentNetwork):
         name,
         **custom_model_kwargs
     ):
-        super(LSTMforMetaRL, self).__init__(
-            obs_space, action_space, None, model_config, name
+        super(MLPplusLSTM, self).__init__(
+            obs_space, action_space, num_outputs, model_config, name
         )
         
         # if logger.isEnabledFor(logging.INFO):
@@ -169,11 +174,28 @@ class LSTMforMetaRL(RecurrentNetwork):
         self.encoder_hiddens = list(custom_model_kwargs.get("encoder_hiddens", []))
         self.encoder_activation = custom_model_kwargs.get("encoder_activation")
         encoder_activation = get_activation_fn(self.encoder_activation)
-        self.vf_hiddens = list(custom_model_kwargs.get("vf_hiddens", []))
-        self.vf_activation = custom_model_kwargs.get("vf_activation")
-        vf_activation = get_activation_fn(self.vf_activation)
+        vf_share_layers = model_config.get("vf_share_layers")
+        free_log_std = model_config.get("free_log_std")
+        if not vf_share_layers:
+            self.vf_hiddens = list(custom_model_kwargs.get("vf_hiddens", []))
+            self.vf_activation = custom_model_kwargs.get("vf_activation")
+            vf_activation = get_activation_fn(self.vf_activation)
+        self.max_seq_len = model_config.get("max_seq_len")
+    
         self.num_outputs = num_outputs
 
+        # Generate free-floating bias variables for the second half of
+        # the outputs.
+        if free_log_std:
+            assert num_outputs % 2 == 0, (
+                "num_outputs must be divisible by two",
+                num_outputs,
+            )
+            num_outputs = num_outputs // 2
+            self.log_std_var = tf.Variable(
+                [0.0] * num_outputs, dtype=tf.float32, name="log_std"
+            )
+        
         # Define input layers
         input_layer = tf.keras.layers.Input(
             shape=(None, obs_space.shape[0]), name="inputs"
@@ -205,20 +227,32 @@ class LSTMforMetaRL(RecurrentNetwork):
 
         # Postprocess LSTM output with another hidden layer and compute logits
         logits = tf.keras.layers.Dense(
-            self.num_outputs, activation=tf.keras.activations.linear, name="logits"
+            num_outputs, activation=tf.keras.activations.linear, name="logits"
         )(lstm_out)
 
+        # Concat the log std vars to the end of the state-dependent means.
+        if free_log_std:
+
+            def tiled_log_std(x):
+                return tf.tile(tf.expand_dims(tf.expand_dims(self.log_std_var, 0),1), [tf.shape(x)[0], tf.shape(x)[1], 1])
+
+            log_std_out = tf.keras.layers.Lambda(tiled_log_std)(input_layer)
+            logits = tf.keras.layers.Concatenate(axis=2)([logits, log_std_out])
+
         # Compute value estimate with the vf_hiddens
-        last_vf_layer = input_layer
-        i = 1
-        for size in self.vf_hiddens:
-            last_vf_layer = tf.keras.layers.Dense(
-                size,
-                name="fc_value_{}".format(i),
-                activation=vf_activation,
-                kernel_initializer=normc_initializer(1.0),
-            )(last_vf_layer)
-            i += 1
+        if not vf_share_layers:
+            last_vf_layer = input_layer
+            i = 1
+            for size in self.vf_hiddens:
+                last_vf_layer = tf.keras.layers.Dense(
+                    size,
+                    name="fc_value_{}".format(i),
+                    activation=vf_activation,
+                    kernel_initializer=normc_initializer(1.0),
+                )(last_vf_layer)
+                i += 1
+        else:
+            last_vf_layer = lstm_out
         value_out = tf.keras.layers.Dense(
             1,
             name="value_out",
@@ -239,6 +273,7 @@ class LSTMforMetaRL(RecurrentNetwork):
     @override(RecurrentNetwork)
     def forward_rnn(self, inputs, state, seq_lens):
         model_out, self._value_out, h, c = self.rnn_model([inputs, seq_lens] + state)
+        
         return model_out, [h, c]
 
     @override(ModelV2)
@@ -253,7 +288,7 @@ class LSTMforMetaRL(RecurrentNetwork):
         return tf.reshape(self._value_out, [-1])
 
 
-class GTrXLforMetaRL(RecurrentNetwork):
+class MLPplusGTrXL(RecurrentNetwork):
     """GTrXL-based model for meta-RL. The policy model is made up of an encoder and a GTrXL net.
      The encoder is a simple feedforward network that preprocesses the observation before sending
      it to the GTrXL. The GTrXL then outputs the logits.
@@ -261,18 +296,22 @@ class GTrXLforMetaRL(RecurrentNetwork):
      same observation as input.
     
      Args:
-        num_transformer_units (int): The number of transformer units.
-        attention_dim (int): The dimension of the transformer units.
-        num_heads (int): The number of heads in the attention.
-        head_dim (int): The dimension of each head.
-        memory_inference (int): The number of previous outputs to use as memory input to each layer.
-        position_wise_mlp_dim (int): The dimension of the position-wise MLP.
-        init_gru_gate_bias (float): The initial bias of the GRU gate.
-        max_seq_len (int): The maximum length of the input observation sequence.
-        encoder_hiddens (list): The sizes of the hidden layers of the encoder.
-        encoder_activation (str): The activation function of the encoder.
-        vf_hiddens (list): The sizes of the hidden layers of the value function.
-        vf_activation (str): The activation function of the value function.
+        custom_model_kwargs:
+            num_transformer_units (int): The number of transformer units.
+            attention_dim (int): The dimension of the transformer units.
+            num_heads (int): The number of heads in the attention.
+            head_dim (int): The dimension of each head.
+            memory_inference (int): The number of previous outputs to use as memory input to each layer.
+            position_wise_mlp_dim (int): The dimension of the position-wise MLP.
+            init_gru_gate_bias (float): The initial bias of the GRU gate.
+            encoder_hiddens (list): The sizes of the hidden layers of the encoder.
+            encoder_activation (str): The activation function of the encoder.
+            vf_hiddens (list): The sizes of the hidden layers of the value function.
+            vf_activation (str): The activation function of the value function.
+        model_config:
+            max_seq_len (int): The maximum length of the input observation sequence.
+            vf_share_layers (bool): Whether to share the layers of the value function with the policy.
+            free_log_std (bool): Whether to generate free-floating bias variables for the second half of the model outputs.
     """
 
     def __init__(
@@ -299,16 +338,32 @@ class GTrXLforMetaRL(RecurrentNetwork):
         self.position_wise_mlp_dim = custom_model_kwargs.get("position_wise_mlp_dim")
         self.init_gru_gate_bias = custom_model_kwargs.get("init_gru_gate_bias")
         self.max_seq_len = model_config.get("max_seq_len")
-        self.obs_dim = obs_space.shape[0]
-
+        
         self.encoder_hiddens = list(custom_model_kwargs.get("encoder_hiddens", []))
         self.encoder_activation = custom_model_kwargs.get("encoder_activation")
         encoder_activation = get_activation_fn(self.encoder_activation)
-        self.vf_hiddens = list(custom_model_kwargs.get("vf_hiddens", []))
-        self.vf_activation = custom_model_kwargs.get("vf_activation")
-        vf_activation = get_activation_fn(self.vf_activation)
-        self.last_n_obs_to_vf = custom_model_kwargs.get("last_n_obs_to_vf")
+
+        vf_share_layers = model_config.get("vf_share_layers")
+        free_log_std = model_config.get("free_log_std")
+        if not vf_share_layers:
+            self.vf_hiddens = list(custom_model_kwargs.get("vf_hiddens", []))
+            self.vf_activation = custom_model_kwargs.get("vf_activation")
+            vf_activation = get_activation_fn(self.vf_activation)
+
+        self.obs_dim = obs_space.shape[0]
         self.num_outputs = num_outputs
+
+        # Generate free-floating bias variables for the second half of
+        # the outputs.
+        if free_log_std:
+            assert num_outputs % 2 == 0, (
+                "num_outputs must be divisible by two",
+                num_outputs,
+            )
+            num_outputs = num_outputs // 2
+            self.log_std_var = tf.Variable(
+                [0.0] * num_outputs, dtype=tf.float32, name="log_std"
+            )
 
         # Observation input: sequence of last max_seq_len observations
         input_layer = tf.keras.layers.Input(
@@ -383,15 +438,21 @@ class GTrXLforMetaRL(RecurrentNetwork):
 
         # Postprocess TrXL output with another hidden layer and compute values.
         logits = tf.keras.layers.Dense(
-            self.num_outputs, activation=tf.keras.activations.linear, name="logits"
+            num_outputs, activation=tf.keras.activations.linear, name="logits"
         )(E_out)
+
+        # Concat the log std vars to the end of the state-dependent means.
+        if free_log_std:
+
+            def tiled_log_std(x):
+                return tf.tile(tf.expand_dims(tf.expand_dims(self.log_std_var, 0),1), [tf.shape(x)[0], tf.shape(x)[1], 1])
+
+            log_std_out = tf.keras.layers.Lambda(tiled_log_std)(input_layer)
+            logits = tf.keras.layers.Concatenate(axis=2)([logits, log_std_out])
         
         # Compute value estimate with the vf_hiddens
-        if len(self.vf_hiddens) > 0:
-            if self.last_n_obs_to_vf:
-                last_vf_layer = input_layer
-            else:
-                last_vf_layer = input_layer[:, -1, :]
+        if not vf_share_layers:
+            last_vf_layer = input_layer
             i = 1
             for size in self.vf_hiddens:
                 last_vf_layer = tf.keras.layers.Dense(

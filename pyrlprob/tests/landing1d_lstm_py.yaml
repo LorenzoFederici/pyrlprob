@@ -51,6 +51,9 @@ config:
 
       vf_hiddens: [64, 64]
       vf_activation: tanh
+
+    vf_share_layers: False
+    free_log_std: True
     max_seq_len: 20
   
   #environment:
