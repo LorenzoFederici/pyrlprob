@@ -43,7 +43,7 @@ config:
   vf_clip_param: 10.0
 
   model:
-    custom_model: LSTMforMetaRL
+    custom_model: MLPplusLSTM
     custom_model_config:
       encoder_hiddens: [64, 64]
       encoder_activation: tanh
