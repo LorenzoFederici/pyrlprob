@@ -27,11 +27,7 @@ def main():
     min_w = args.min_w
     max_w = args.max_w
 
-    ray.init(logging_level="ERROR", log_to_driver=False)
-
     tune_workers_envs(config_file, cpus, gpus, envs, min_w, max_w)
-
-    ray.shutdown()
 
 
 if __name__ == "__main__":

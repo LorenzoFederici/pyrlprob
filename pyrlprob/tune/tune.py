@@ -1,10 +1,13 @@
 import os
 from sympy import divisors
 import yaml
+import ray
 from pyrlprob.problem import RLProblem
 
 def tune_workers_envs(config_file, cpus, gpus, envs, min_w, max_w):
     
+    ray.init(logging_level="ERROR", log_to_driver=False)
+
     config = yaml.safe_load(open(config_file))
 
     # Tests
@@ -85,5 +88,7 @@ def tune_workers_envs(config_file, cpus, gpus, envs, min_w, max_w):
             print("Done case: w = %d, cpu_per_w = %4.3f" % (w, cpus_per_w))
         
     f_log.close()
+
+    ray.shutdown()
 
     return
