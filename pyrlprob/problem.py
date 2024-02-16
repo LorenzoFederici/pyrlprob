@@ -41,14 +41,14 @@ class RLProblem:
             self.__method = settings["run"]
             self.__algorithm = self.__method.upper()
         alg_module = importlib.import_module("ray.rllib.algorithms." + self.__method)
-        alg_config = getattr(alg_module, self.__algorithm + "Config")
+        self.alg_config = getattr(alg_module, self.__algorithm + "Config")
         self.trainer = self.__algorithm
 
         #Stopping criteria definition
         self.stop = settings["stop"]
 
         #Config definition
-        self.config = alg_config().to_dict()
+        self.config = self.alg_config().to_dict()
         update(self.config, settings["config"])
 
         #Evironment definition
@@ -87,16 +87,16 @@ class RLProblem:
             mod = importlib.import_module(mod_name)
             self.config["custom_eval_function"] = getattr(mod, fun_name)
         self.custom_eval_function = self.config["custom_eval_function"]
-        self.final_evaluation_duration = 1
-        self.final_evaluation_duration_unit = "episodes"
-        if "final_evaluation_duration" in settings:
-            self.final_evaluation_duration = settings["final_evaluation_duration"]
-            self.final_evaluation_duration_unit = settings["final_evaluation_duration_unit"]
 
         #Final evaluation
         self.final_evaluation_config = {}
+        self.final_evaluation_duration = 1
+        self.final_evaluation_duration_unit = "episodes"
         if "final_evaluation" in settings:
             if settings["final_evaluation"]:
+                if "final_evaluation_duration" in settings:
+                    self.final_evaluation_duration = settings["final_evaluation_duration"]
+                    self.final_evaluation_duration_unit = settings["final_evaluation_duration_unit"]
                 if "final_evaluation_config" in settings:
                     self.final_evaluation_config = settings["final_evaluation_config"]
         if self.evaluation_config is not None and self.evaluation_config != {}:
@@ -138,6 +138,9 @@ class RLProblem:
             self.load["last_cps"] = settings["load"]["prev_last_cps"]
             _, self.load["checkpoint_dir"] = \
                 get_cp_dir_and_model(self.load["exp_dirs"][-1], self.load["last_cps"][-1])
+        
+        # Update alg_config with the self.config
+        self.alg_config = self.alg_config().from_dict(self.config)
     
 
     def solve(self,
