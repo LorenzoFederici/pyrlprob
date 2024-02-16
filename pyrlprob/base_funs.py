@@ -1,15 +1,12 @@
-import logging
 import numpy as np
 import time
 from typing import *
-from itertools import islice
 import importlib
 import os
 import multiprocessing
 
 import ray
 from ray import tune
-from ray.rllib.models import ModelCatalog
 from ray.rllib.env.vector_env import VectorEnv
 
 from pyrlprob.utils.auxiliary import *
@@ -25,7 +22,8 @@ def training(trainer: Union[str, Callable, Type],
              debug: bool=False,
              open_ray: bool=True,
              return_time: bool=False) -> \
-                Union[Tuple[str, str, int, float], Tuple[str, str, int]]:
+                 Union[Tuple[Dict[str, Any], str, str, int, float], \
+                      Tuple[Dict[str, Any], str, str, int]]:
     """
     Train the current model with ray.tune, using the specified trainer and configs.
 
@@ -42,6 +40,7 @@ def training(trainer: Union[str, Callable, Type],
         return_time (bool): whether to return run time per iter
     
     Return:
+        best_result (str): best result of the experiment
         trainer_dir (str): trainer's output directory
         best_exp_dir (str): directory containing the best experiment's output
         last_checkpoint (int): last checkpoint saved
@@ -77,7 +76,7 @@ def training(trainer: Union[str, Callable, Type],
                         local_dir=outdir,
                         restore=restore,
                         stop=stop,
-                        metric="training_iteration",
+                        metric="episode_reward_mean",
                         mode="max",
                         checkpoint_freq=1,
                         checkpoint_at_end=True,
@@ -86,7 +85,8 @@ def training(trainer: Union[str, Callable, Type],
     run_time = end_time - start_time
 
     #Last iteration stats
-    last_result = analysis.best_result
+    best_result = analysis.best_result
+    last_result = analysis.get_best_trial("training_iteration", "max").last_result
     best_exp_dir = analysis.best_logdir
     trainer_dir = best_exp_dir[:best_exp_dir.rfind("/")+1]
     best_exp_dir = best_exp_dir + "/"
@@ -104,10 +104,10 @@ def training(trainer: Union[str, Callable, Type],
             % ("# elapsed time [s]", "training_iteration", \
             "episode_reward_mean", "episode_reward_max", "episode_reward_min"))
         f_out_res.write("%22.7f %22d %22.7f %22.7f %22.7f\n" \
-            % (run_time, last_result["training_iteration"], \
-                last_result["episode_reward_mean"], \
-                last_result["episode_reward_max"], \
-                last_result["episode_reward_min"]))
+            % (run_time, best_result["training_iteration"], \
+                best_result["episode_reward_mean"], \
+                best_result["episode_reward_max"], \
+                best_result["episode_reward_min"]))
         f_out_res.close()
 
     #Terminate ray
@@ -117,9 +117,9 @@ def training(trainer: Union[str, Callable, Type],
     #Return trainer and best experiment directory + last checkpoint saved
     #and the run time per iter
     if return_time:
-        return trainer_dir, best_exp_dir, last_checkpoint, run_time_per_iter
+        return best_result, trainer_dir, best_exp_dir, last_checkpoint, run_time_per_iter
     else:
-        return trainer_dir, best_exp_dir, last_checkpoint
+        return best_result, trainer_dir, best_exp_dir, last_checkpoint
 
 
 def evaluation(trainer: Union[str, Callable, Type], 
@@ -251,7 +251,7 @@ def evaluation(trainer: Union[str, Callable, Type],
         config["num_cpus_for_driver"] = int(cpus_machine - config["num_cpus_per_worker"]*total_w)
 
     # Evaluation
-    _, new_best_exp_dir, last_checkpoint  = training(trainer=trainer, 
+    _, _, new_best_exp_dir, last_checkpoint  = training(trainer=trainer, 
                                                      config=config,
                                                      stop=stop,
                                                      load=load,

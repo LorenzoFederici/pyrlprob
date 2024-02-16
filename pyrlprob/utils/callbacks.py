@@ -1,7 +1,6 @@
 from typing import *
 from collections.abc import Iterable
 
-import ray
 from ray.rllib.agents.callbacks import DefaultCallbacks
 from ray.rllib.env import BaseEnv
 from ray.rllib.evaluation import MultiAgentEpisode, RolloutWorker
@@ -15,8 +14,11 @@ class TrainingCallbacks(DefaultCallbacks):
     """
 
     def on_episode_end(self, 
-                       *, worker: RolloutWorker, base_env: BaseEnv,
-                       policies: Dict[str, Policy], episode: MultiAgentEpisode,
+                       *, 
+                       worker: RolloutWorker, 
+                       base_env: BaseEnv,
+                       policies: Dict[str, Policy], 
+                       episode: MultiAgentEpisode,
                        env_index: int, 
                        **kwargs) -> None:
         """
@@ -97,7 +99,8 @@ class EvaluationCallbacks(DefaultCallbacks):
     
 
     def on_episode_end(self, 
-                       *, worker: RolloutWorker, 
+                       *, 
+                       worker: RolloutWorker, 
                        base_env: BaseEnv,
                        policies: Dict[str, Policy], 
                        episode: MultiAgentEpisode,

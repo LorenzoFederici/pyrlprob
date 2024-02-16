@@ -8,6 +8,7 @@ from ray.rllib.models import ModelCatalog
 
 from pyrlprob.base_funs import *
 from pyrlprob.utils import update
+from pyrlprob.models import models
 
 
 class RLProblem:
@@ -61,6 +62,10 @@ class RLProblem:
         #Model definition
         self.model = self.config["model"]
         if self.model["custom_model"] is not None:
+            if self.model["custom_model"] in ["FCModelforRNNs", "MLPplusLSTM", "MLPplusGTrXL"]:
+                custom_model = getattr(models, self.model["custom_model"])
+                self.model["custom_model"] = "pyrlprob.models." + self.model["custom_model"]
+
             if "." in self.model["custom_model"]:
                 mod_name, model_name = self.model["custom_model"].rsplit('.',1)
                 mod = importlib.import_module(mod_name)
@@ -81,13 +86,20 @@ class RLProblem:
             mod = importlib.import_module(mod_name)
             self.config["custom_eval_function"] = getattr(mod, fun_name)
         self.custom_eval_function = self.config["custom_eval_function"]
-        self.num_eval_episodes = 1
-        if "num_eval_episodes" in settings:
-            self.num_eval_episodes = settings["num_eval_episodes"]
-        self.eval_env_config = {}
-        if "eval_env_config" in settings:
-            self.eval_env_config = settings["eval_env_config"]
-        update(self.evaluation_config, self.eval_env_config)
+
+        #Final evaluation
+        self.final_eval_episodes = 1
+        self.final_evaluation_config = {}
+        if "final_evaluation" in settings:
+            if settings["final_evaluation"]:
+                if "final_eval_episodes" in settings:
+                    self.final_eval_episodes = settings["final_eval_episodes"]
+                if "final_evaluation_config" in settings:
+                    self.final_evaluation_config = settings["final_evaluation_config"]
+        if self.evaluation_config is not None and self.evaluation_config != {}:
+            update(self.evaluation_config, self.final_evaluation_config)
+        else:
+            self.evaluation_config = self.final_evaluation_config
         if "record_env" in self.evaluation_config:
             if self.evaluation_config["record_env"] and \
                 isinstance(self.evaluation_config["record_env"], str):
@@ -138,7 +150,8 @@ class RLProblem:
               debug: bool=False,
               open_ray: bool=True,
               return_time: bool=False) ->  \
-                  Union[Tuple[str, List[str], List[int], str, float], Tuple[str, List[str], List[int], str]]:
+                  Union[Tuple[Dict[str, Any], str, List[str], List[int], str, float], \
+                        Tuple[Dict[str, Any], str, List[str], List[int], str]]:
         """
         Solve a RL problem.
         It include pre-processing and training, 
@@ -155,6 +168,7 @@ class RLProblem:
             return_time (bool): whether to return run time per iter
         
         Return:
+            best_result (str): best result of the experiment
             trainer_dir (str): trainer directory
             exp_dirs (list): experiment directories
             last_cps (list): last checkpoints of the experiments
@@ -164,7 +178,7 @@ class RLProblem:
         
         #Training
         if return_time:
-            trainer_dir, best_exp_dir, last_checkpoint, run_time = training(trainer=self.trainer, 
+            best_result, trainer_dir, best_exp_dir, last_checkpoint, run_time = training(trainer=self.trainer, 
                                                                             config=self.config, 
                                                                             stop=self.stop,
                                                                             logdir=logdir,
@@ -173,7 +187,7 @@ class RLProblem:
                                                                             open_ray=open_ray,
                                                                             return_time=return_time)
         else:
-            trainer_dir, best_exp_dir, last_checkpoint = training(trainer=self.trainer, 
+            best_result, trainer_dir, best_exp_dir, last_checkpoint = training(trainer=self.trainer, 
                                                                   config=self.config, 
                                                                   stop=self.stop,
                                                                   logdir=logdir,
@@ -204,9 +218,9 @@ class RLProblem:
             best_cp_dir, _ = get_cp_dir_and_model(best_exp_dir, last_checkpoint)
 
         if return_time:
-            return trainer_dir, exp_dirs, last_cps, best_cp_dir, run_time
+            return best_result, trainer_dir, exp_dirs, last_cps, best_cp_dir, run_time
         else:
-            return trainer_dir, exp_dirs, last_cps, best_cp_dir
+            return best_result, trainer_dir, exp_dirs, last_cps, best_cp_dir
 
 
     def evaluate(self,
@@ -243,7 +257,7 @@ class RLProblem:
                                  config=self.config,
                                  env_name=self.env, 
                                  env_config=self.env_config,
-                                 evaluation_num_episodes=self.num_eval_episodes,
+                                 evaluation_num_episodes=self.final_eval_episodes,
                                  evaluation_config=self.evaluation_config, 
                                  custom_eval_function=self.custom_eval_function, 
                                  best_metric=best_metric,

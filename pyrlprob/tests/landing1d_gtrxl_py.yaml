@@ -1,0 +1,128 @@
+run: ppo
+
+stop:
+  training_iteration: 100
+
+custom_metrics:
+- cstr_viol
+postproc_data:
+  episode_step_data: 
+  - h
+  - v
+  - m
+  - t
+  - T
+  episode_end_data: 
+  - hf
+  - vf
+  - mf
+
+final_evaluation: True
+final_eval_episodes: 10
+final_evaluation_config:
+  env_config:
+    prng_seed: 0
+
+config:
+
+  #training:
+  gamma: 0.999
+  lr: 1.0e-04
+  train_batch_size: 400
+  use_critic: True
+  use_gae: True
+  kl_coeff: 0.
+  lambda: 0.98
+  sgd_minibatch_size: 160
+  shuffle_sequences: True
+  num_sgd_iter: 10
+  vf_loss_coeff: 0.5
+  entropy_coeff: 0.
+  clip_param: 0.2
+  vf_clip_param: 10.0
+
+  model:
+    custom_model: MLPplusGTrXL
+    custom_model_config:
+      num_transformer_units: 1
+      attention_dim: 32
+      num_heads: 2
+      head_dim: 16
+      memory_inference: 20
+      position_wise_mlp_dim: 32
+      init_gru_gate_bias: 2.0
+
+      encoder_hiddens: [64, 64]
+      encoder_activation: tanh
+
+      vf_hiddens: [64, 64]
+      vf_activation: tanh
+
+    vf_share_layers: False
+    free_log_std: True
+    max_seq_len: 20
+  
+  #environment:
+  env: pyrlprob.tests.py_tests.pyLanding1DEnv
+  env_config:
+    H: 40
+    h0_min: 0.8
+    h0_max: 1.2
+    v0_min: -0.85
+    v0_max: -0.75
+    m0: 1.0
+    tf: 1.397
+    hf: 0.0
+    vf: 0.0
+    Tmax: 1.227
+    c: 2.349
+    g: 1.0
+  
+  #framework:
+  framework: tf
+  
+  #rollouts:
+  num_workers: 2
+  num_envs_per_worker: 5
+  create_env_on_driver: False
+  rollout_fragment_length: 40
+  batch_mode: complete_episodes
+  remote_worker_envs: False
+  ignore_worker_failures: True
+
+  #evaluation:
+  evaluation_interval: 1
+  evaluation_num_episodes: 2
+  evaluation_config:
+    explore: False
+  evaluation_num_workers: 2
+  
+  #exploration:
+  explore: True
+  
+  #debugging:
+  log_level: INFO
+  
+  callbacks:
+    epsConstraintCallbacks
+  
+  #resources:
+  num_gpus: 0
+  num_cpus_per_worker: 1
+  num_gpus_per_worker: 0
+  num_cpus_for_driver: 1
+  
+  
+  
+  
+  
+  
+ 
+  
+  
+  
+  
+  
+  
+  
+  

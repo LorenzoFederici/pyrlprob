@@ -5,7 +5,7 @@ this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
 setup(name='pyrlprob',
-    version='2.0.6',
+    version='2.1.0',
     author='Lorenzo Federici',
     author_email = 'federicilorenzo94@gmail.com',
     description = 'Train Gym-derived environments in Python/C++ through Ray RLlib',
@@ -22,7 +22,7 @@ setup(name='pyrlprob',
         'gym==0.15.3',
         'lz4',
         'matplotlib',
-        'numpy',
+        'numpy==1.23.5',
         'pandas',
         'pybind11',
         'pytest',
@@ -35,8 +35,9 @@ setup(name='pyrlprob',
         'tensorboardx; platform_machine=="x86_64"',
         'torch',
         'typing',
-        'PyYAML'
+        'PyYAML',
+        'protobuf==3.20.3'
     ],
     packages = find_packages(),
-    python_requires = '>=3.9',
+    python_requires = '<3.10',
     include_package_data = True)

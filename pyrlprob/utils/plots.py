@@ -1,6 +1,5 @@
 from typing import *
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
 
 from pyrlprob.utils.auxiliary import moving_average, metric_training_trend

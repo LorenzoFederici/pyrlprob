@@ -28,7 +28,6 @@ To test if the package is installed correctly, run the following tests:
 ```python
 from pyrlprob.tests import *
 
-test_train_py()
 test_train_eval_py()
 ```
 

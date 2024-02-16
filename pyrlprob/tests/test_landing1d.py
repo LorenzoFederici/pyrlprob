@@ -10,7 +10,8 @@ import matplotlib
 from pyrlprob.utils.plots import plot_metric
 
 
-def test_train_py(res_dir: Optional[str]=None) -> None:
+def test_train_py(model: str="fcnet",
+        res_dir: Optional[str]=None) -> None:
     """
     Test pyrlprob training functionalities in the Landing1D environment
         written in python.
@@ -22,6 +23,7 @@ def test_train_py(res_dir: Optional[str]=None) -> None:
     #Train
     _, _, _, _ = \
         test_landing_env_train(py_or_cpp="py",
+                               model=model,
                                res_dir=res_dir)
 
 
@@ -40,7 +42,8 @@ def test_train_cpp(res_dir: Optional[str]=None) -> None:
                                res_dir=res_dir)
 
 
-def test_train_eval_py(res_dir: Optional[str]=None) -> None:
+def test_train_eval_py(model: str="fcnet",
+                       res_dir: Optional[str]=None) -> None:
     """
     Test pyrlprob training, evaluation and post-processing functionalities 
         in the Landing1D environment written in python.
@@ -51,6 +54,7 @@ def test_train_eval_py(res_dir: Optional[str]=None) -> None:
 
     #Train, evaluate, post-process
     test_landing_env_train_eval(py_or_cpp="py",
+                               model=model,
                                res_dir=res_dir)
 
 
@@ -80,6 +84,7 @@ def make_cpp_lib() -> None:
 
 
 def test_landing_env_train(py_or_cpp: str="py",
+                           model: str="fcnet",
                            res_dir: Optional[str]=None) -> Tuple[RLProblem, str, List[str], List[int]]:
     """
     Test pyrlprob training functionalities in the Landing1D environment.
@@ -92,7 +97,14 @@ def test_landing_env_train(py_or_cpp: str="py",
     #Config file
     __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
     if py_or_cpp == "py":
-        config = os.path.join(__location__, "landing1d_py.yaml")
+        if model == "fcnet":
+            config = os.path.join(__location__, "landing1d_py.yaml")
+        elif model == "lstm":
+            config = os.path.join(__location__, "landing1d_lstm_py.yaml")
+        elif model == "gtrxl":
+            config = os.path.join(__location__, "landing1d_gtrxl_py.yaml")
+        else:
+            assert False, "Model not implemented."
     elif py_or_cpp == "cpp":
         if not any(fname.endswith('.so') for fname in os.listdir(__location__ + "/cpp_tests/")):
             assert False, "Run 'make_cpp_lib()' first to create the dynamic library, then launch again python."
@@ -102,16 +114,17 @@ def test_landing_env_train(py_or_cpp: str="py",
     LandingProblem = RLProblem(config)
 
     #Training
-    trainer_dir, exp_dirs, last_cps, _ = \
+    _, trainer_dir, exp_dirs, last_cps, _ = \
         LandingProblem.solve(res_dir, 
                              evaluate=False, 
                              postprocess=False,
-                             debug=False)
+                             debug=True)
 
     return LandingProblem, trainer_dir, exp_dirs, last_cps
 
 
 def test_landing_env_train_eval(py_or_cpp: str="py",
+                                model: str="fcnet",
                                 res_dir: Optional[str]=None) -> None:
     """
     Test pyrlprob training, evaluation and post-processing functionalities 
@@ -128,6 +141,7 @@ def test_landing_env_train_eval(py_or_cpp: str="py",
     #Train
     LandingProblem, trainer_dir, exp_dirs, last_cps = \
         test_landing_env_train(py_or_cpp=py_or_cpp,
+                               model=model,
                                res_dir=res_dir)
 
     #Create new config file for model re-training
@@ -142,25 +156,22 @@ def test_landing_env_train_eval(py_or_cpp: str="py",
     #Training, evaluation and postprocessing of pre-trained model
     config_new = os.path.join(__location__, "landing1d_load.yaml")
     LandingProblemPretrained = RLProblem(config_new)
-    trainer_dir, exp_dirs, last_cps, _ = \
+    _, trainer_dir, exp_dirs, last_cps, _ = \
         LandingProblemPretrained.solve(debug=False)
 
-    #Plot of metric trend
-    plt.style.use("seaborn")
-    plt.style.use("seaborn")
-    matplotlib.rc('font', size=20)
-    fig = plot_metric("episode_reward",
-                      exp_dirs,
-                      last_cps)
-    plt.xlabel('training iteration', fontsize=20)
-    plt.ylabel('episode reward', fontsize=20)
-    fig.savefig(trainer_dir + "episode_reward.png")
+    # #Plot of metric trend
+    # plt.style.use("seaborn")
+    # plt.style.use("seaborn")
+    # matplotlib.rc('font', size=20)
+    # fig = plot_metric("episode_reward",
+    #                   exp_dirs,
+    #                   last_cps)
+    # plt.xlabel('training iteration', fontsize=20)
+    # plt.ylabel('episode reward', fontsize=20)
+    # fig.savefig(trainer_dir + "episode_reward.png")
 
 
 if __name__ == "__main__":
     import pytest
     import sys
     sys.exit(pytest.main(["-v", __file__]))
-
-
-

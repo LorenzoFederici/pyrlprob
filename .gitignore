@@ -12,4 +12,3 @@ build/
 results/
 *_test.py
 .DS_Store
-*.sh
