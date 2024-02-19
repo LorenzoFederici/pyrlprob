@@ -62,7 +62,8 @@ class RLProblem:
         #Model definition
         self.model = self.config["model"]
         if self.model["custom_model"] is not None:
-            if self.model["custom_model"] in ["FCModelforRNNs", "MLPplusLSTM", "MLPplusGTrXL"]:
+            if self.model["custom_model"] in ["FCModelforRNNs", "MLPplusLSTM", \
+                                              "MLPplusGTrXL"]:
                 custom_model = getattr(models, self.model["custom_model"])
                 self.model["custom_model"] = "pyrlprob.models." + self.model["custom_model"]
 
