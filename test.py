@@ -1,4 +1,4 @@
 from pyrlprob.tests import *
 
-test_train_py("gtrxl")
+test_train_py("mlp")
 

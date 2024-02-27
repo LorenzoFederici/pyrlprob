@@ -46,7 +46,10 @@ config:
     custom_model_config:
       encoder_hiddens: [64, 64]
       encoder_activation: tanh
+
       lstm_cell_size: 32
+      lstm_use_prev_action: True
+      lstm_use_prev_reward: True
 
       vf_hiddens: [64, 64]
       vf_activation: tanh

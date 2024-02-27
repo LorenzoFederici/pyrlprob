@@ -8,6 +8,7 @@ from typing import Dict, List
 from ray.rllib.utils.typing import TensorType, List, ModelConfigDict
 from ray.rllib.models.utils import get_activation_fn
 from ray.rllib.utils.annotations import override
+from ray.rllib.utils.tf_ops import one_hot
 from ray.rllib.models.tf.recurrent_net import RecurrentNetwork
 from ray.rllib.policy.sample_batch import SampleBatch
 from ray.rllib.policy.view_requirement import ViewRequirement
@@ -148,6 +149,8 @@ class MLPplusLSTM(RecurrentNetwork):
             encoder_activation (str): The activation function of the encoder.
             vf_hiddens (list): The sizes of the hidden layers of the value function.
             vf_activation (str): The activation function of the value function.
+            lstm_use_prev_action (bool): Whether to use the previous action as input to the LSTM cell.
+            lstm_use_prev_reward (bool): Whether to use the previous reward as input to the LSTM cell.
         model_config:
             max_seq_len (int): The maximum length of the input observation sequence.
             vf_share_layers (bool): Whether to share the layers of the value function with the policy.
@@ -170,22 +173,30 @@ class MLPplusLSTM(RecurrentNetwork):
         if logger.isEnabledFor(logging.INFO):
             print("custom_model_kwargs: {}".format(custom_model_kwargs))
 
-        self.cell_size = custom_model_kwargs.get("lstm_cell_size")
+        # Encoder parameters
         self.encoder_hiddens = list(custom_model_kwargs.get("encoder_hiddens", []))
         self.encoder_activation = custom_model_kwargs.get("encoder_activation")
         encoder_activation = get_activation_fn(self.encoder_activation)
-        vf_share_layers = model_config.get("vf_share_layers")
+
+        # LSTM parameters
+        self.cell_size = custom_model_kwargs.get("lstm_cell_size")
+        self.use_prev_action = custom_model_kwargs.get("lstm_use_prev_action")
+        self.use_prev_reward = custom_model_kwargs.get("lstm_use_prev_reward")
+        self.max_seq_len = model_config.get("max_seq_len")
         free_log_std = model_config.get("free_log_std")
-        if not vf_share_layers:
+
+        # Value function parameters
+        self.vf_share_layers = model_config.get("vf_share_layers")
+        if not self.vf_share_layers:
             self.vf_hiddens = list(custom_model_kwargs.get("vf_hiddens", []))
             self.vf_activation = custom_model_kwargs.get("vf_activation")
             vf_activation = get_activation_fn(self.vf_activation)
-        self.max_seq_len = model_config.get("max_seq_len")
-    
+        
+        # Number of outputs (logit dim)
         self.num_outputs = num_outputs
 
         # Generate free-floating bias variables for the second half of
-        # the outputs.
+        # the outputs, if free_log_std = True
         if free_log_std:
             assert num_outputs % 2 == 0, (
                 "num_outputs must be divisible by two",
@@ -196,36 +207,65 @@ class MLPplusLSTM(RecurrentNetwork):
                 [0.0] * num_outputs, dtype=tf.float32, name="log_std"
             )
         
-        # Define input layers
-        input_layer = tf.keras.layers.Input(
-            shape=(None, obs_space.shape[0]), name="inputs"
+        # Action dimension
+        if isinstance(action_space, Discrete):
+            self.action_dim = action_space.n
+        elif isinstance(action_space, MultiDiscrete):
+            self.action_dim = np.sum(action_space.nvec)
+        elif action_space.shape is not None:
+            self.action_dim = int(np.product(action_space.shape))
+        else:
+            self.action_dim = int(len(action_space))
+
+        ## DEFINE ENCODER LAYERS ##
+            
+        # Input layer
+        input_layer_encoder = tf.keras.layers.Input(
+            shape=(int(np.product(obs_space.shape)), ), name="observations"
+        )
+
+        # Encoder hidden layers
+        last_layer_encoder = input_layer_encoder
+        i = 1
+        for size in self.encoder_hiddens:
+            last_layer_encoder = tf.keras.layers.Dense(
+                size,
+                name="fc_encoder_{}".format(i),
+                activation=encoder_activation,
+                kernel_initializer=normc_initializer(1.0),
+            )(last_layer_encoder)
+            i += 1
+
+        # Number of outputs (logit dim)
+        self.encoder_out_size = self.encoder_hiddens[-1]
+
+        ## DEFINE LSTM LAYERS ##
+
+        # Add prev-action/reward nodes to input to LSTM.
+        self.num_lstm_inputs = self.encoder_out_size
+        if self.use_prev_action:
+            self.num_lstm_inputs += self.action_dim
+        if self.use_prev_reward:
+            self.num_lstm_inputs += 1
+
+        # Input layer
+        input_layer_lstm = tf.keras.layers.Input(
+            shape=(None, self.num_lstm_inputs), name="inputs_lstm"
         )
         state_in_h = tf.keras.layers.Input(shape=(self.cell_size,), name="h")
         state_in_c = tf.keras.layers.Input(shape=(self.cell_size,), name="c")
         seq_in = tf.keras.layers.Input(shape=(), name="seq_in", dtype=tf.int32)
 
-        # Preprocess observation with the encoder_hiddens and send the output to the LSTM cell
-        last_layer = input_layer
-        i = 1
-        for size in self.encoder_hiddens:
-            last_layer = tf.keras.layers.Dense(
-                size,
-                name="fc_encoder_{}".format(i),
-                activation=encoder_activation,
-                kernel_initializer=normc_initializer(1.0),
-            )(last_layer)
-            i += 1
-
         # LSTM cell
         lstm_out, state_h, state_c = tf.keras.layers.LSTM(
             self.cell_size, return_sequences=True, return_state=True, name="lstm"
         )(
-            inputs=last_layer,
+            inputs=input_layer_lstm,
             mask=tf.sequence_mask(seq_in),
             initial_state=[state_in_h, state_in_c],
         )
 
-        # Postprocess LSTM output with another hidden layer and compute logits
+        # Output layer
         logits = tf.keras.layers.Dense(
             num_outputs, activation=tf.keras.activations.linear, name="logits"
         )(lstm_out)
@@ -236,12 +276,14 @@ class MLPplusLSTM(RecurrentNetwork):
             def tiled_log_std(x):
                 return tf.tile(tf.expand_dims(tf.expand_dims(self.log_std_var, 0),1), [tf.shape(x)[0], tf.shape(x)[1], 1])
 
-            log_std_out = tf.keras.layers.Lambda(tiled_log_std)(input_layer)
+            log_std_out = tf.keras.layers.Lambda(tiled_log_std)(input_layer_lstm)
             logits = tf.keras.layers.Concatenate(axis=2)([logits, log_std_out])
 
-        # Compute value estimate with the vf_hiddens
-        if not vf_share_layers:
-            last_vf_layer = input_layer
+        ## DEFINE VALUE FUNCTION LAYERS ##
+            
+        # Value function hiddens layers
+        if not self.vf_share_layers:
+            last_vf_layer = input_layer_encoder
             i = 1
             for size in self.vf_hiddens:
                 last_vf_layer = tf.keras.layers.Dense(
@@ -253,6 +295,8 @@ class MLPplusLSTM(RecurrentNetwork):
                 i += 1
         else:
             last_vf_layer = lstm_out
+        
+        # Output layer
         value_out = tf.keras.layers.Dense(
             1,
             name="value_out",
@@ -260,21 +304,91 @@ class MLPplusLSTM(RecurrentNetwork):
             kernel_initializer=normc_initializer(0.01),
         )(last_vf_layer)
 
-        # Create the RNN model
-        self.rnn_model = tf.keras.Model(
-            inputs=[input_layer, seq_in, state_in_h, state_in_c],
-            outputs=[logits, value_out, state_h, state_c],
-        )
+        ## CREATE THE MODELS ##
+
+        # Encoder model
+        if self.vf_share_layers:
+            self.encoder_model = tf.keras.Model(
+                inputs=input_layer_encoder, outputs=last_layer_encoder
+            )
+        else:
+            self.encoder_model = tf.keras.Model(
+                inputs=input_layer_encoder, outputs=[last_layer_encoder, value_out]
+            )
+        
+        # LSTM model
+        if self.vf_share_layers:
+            self.rnn_model = tf.keras.Model(
+                inputs=[input_layer_lstm, seq_in, state_in_h, state_in_c],
+                outputs=[logits, value_out, state_h, state_c],
+            )
+        else:
+            self.rnn_model = tf.keras.Model(
+                inputs=[input_layer_lstm, seq_in, state_in_h, state_in_c],
+                outputs=[logits, state_h, state_c],
+            )
 
         # Print out model summary in INFO logging mode.
         # if logger.isEnabledFor(logging.INFO):
+        self.encoder_model.summary()
         self.rnn_model.summary()
+
+        # Add prev-a/r to this model's view, if required.
+        if self.use_prev_action:
+            self.view_requirements[SampleBatch.PREV_ACTIONS] = \
+                ViewRequirement(SampleBatch.ACTIONS, space=self.action_space,
+                                shift=-1)
+        if self.use_prev_reward:
+            self.view_requirements[SampleBatch.PREV_REWARDS] = \
+                ViewRequirement(SampleBatch.REWARDS, shift=-1)
+
+
+    @override(RecurrentNetwork)
+    def forward(self, input_dict: Dict[str, TensorType],
+                state: List[TensorType],
+                seq_lens: TensorType) -> tuple[TensorType, List[TensorType]]:
+        
+        assert seq_lens is not None
+
+        # Push observations through encoder net's `forward()` first.
+        if self.vf_share_layers:
+            wrapped_out = self.encoder_model(input_dict["obs_flat"])
+        else:
+            wrapped_out, self._value_out = self.encoder_model(input_dict["obs_flat"])
+
+        # Concat. prev-action/reward if required.
+        prev_a_r = []
+        if self.use_prev_action:
+            prev_a = input_dict[SampleBatch.PREV_ACTIONS]
+            if isinstance(self.action_space, (Discrete, MultiDiscrete)):
+                prev_a = one_hot(prev_a, self.action_space)
+            prev_a_r.append(
+                tf.reshape(tf.cast(prev_a, tf.float32), [-1, self.action_dim]))
+        if self.use_prev_reward:
+            prev_a_r.append(
+                tf.reshape(
+                    tf.cast(input_dict[SampleBatch.PREV_REWARDS], tf.float32),
+                    [-1, 1]))
+
+        if prev_a_r:
+            wrapped_out = tf.concat([wrapped_out] + prev_a_r, axis=1)
+
+        # Then through our LSTM.
+        input_dict["obs_flat"] = wrapped_out
+
+        return super().forward(input_dict, state, seq_lens)
+    
 
     @override(RecurrentNetwork)
     def forward_rnn(self, inputs, state, seq_lens):
-        model_out, self._value_out, h, c = self.rnn_model([inputs, seq_lens] + state)
+
+        if self.vf_share_layers:
+            model_out, self._value_out, h, c = self.rnn_model([inputs, seq_lens] + state)
+        else:
+            model_out, h, c = self.rnn_model([inputs, seq_lens] + state)
         
         return model_out, [h, c]
+
 
     @override(ModelV2)
     def get_initial_state(self):
@@ -282,6 +396,7 @@ class MLPplusLSTM(RecurrentNetwork):
             np.zeros(self.cell_size, np.float32),
             np.zeros(self.cell_size, np.float32),
         ]
+
 
     @override(ModelV2)
     def value_function(self):
