@@ -44,6 +44,9 @@ config:
   model:
     custom_model: MLPplusGTrXL
     custom_model_config:
+      encoder_hiddens: [64, 64]
+      encoder_activation: tanh
+
       num_transformer_units: 1
       attention_dim: 32
       num_heads: 2
@@ -51,9 +54,8 @@ config:
       memory_inference: 20
       position_wise_mlp_dim: 32
       init_gru_gate_bias: 2.0
-
-      encoder_hiddens: [64, 64]
-      encoder_activation: tanh
+      use_n_prev_actions: 20
+      use_n_prev_rewards: 20
 
       vf_hiddens: [64, 64]
       vf_activation: tanh

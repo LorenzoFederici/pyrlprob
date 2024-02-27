@@ -138,9 +138,10 @@ class FCModelforRNNs(TFModelV2):
 class MLPplusLSTM(RecurrentNetwork):
     """LSTM-based model for meta-RL. The policy model is made up of an MLP encoder and an LSTM cell.
      The encoder is a simple feedforward network that preprocesses the observation before sending
-     it to the LSTM cell. The LSTM cell is a standard LSTM cell that outputs the logits.
-     The value function estimate is computed by a separate feedforward network that takes the
-     same observation as input.
+     it to the LSTM cell, possible appending also the previous action and reward.
+     The LSTM cell is a standard LSTM cell that outputs the logits.
+     The value function estimate is computed either by a separate feedforward network that takes the
+     same observation as input, or is an additional output of the LSTM cell.
 
      Args:
         custom_model_kwargs:
@@ -274,7 +275,8 @@ class MLPplusLSTM(RecurrentNetwork):
         if free_log_std:
 
             def tiled_log_std(x):
-                return tf.tile(tf.expand_dims(tf.expand_dims(self.log_std_var, 0),1), [tf.shape(x)[0], tf.shape(x)[1], 1])
+                return tf.tile(tf.expand_dims(tf.expand_dims(self.log_std_var, 0),1), \
+                               [tf.shape(x)[0], tf.shape(x)[1], 1])
 
             log_std_out = tf.keras.layers.Lambda(tiled_log_std)(input_layer_lstm)
             logits = tf.keras.layers.Concatenate(axis=2)([logits, log_std_out])
@@ -647,9 +649,9 @@ class MLPplusLSTM(RecurrentNetwork):
 class MLPplusGTrXL(RecurrentNetwork):
     """GTrXL-based model for meta-RL. The policy model is made up of an encoder and a GTrXL net.
      The encoder is a simple feedforward network that preprocesses the observation before sending
-     it to the GTrXL. The GTrXL then outputs the logits.
-     The value function estimate is computed by a separate feedforward network that takes the
-     same observation as input.
+     it to the GTrXL, plus, possibly, the previous n actions and rewards. The GTrXL then outputs the logits.
+     The value function estimate is either computed by a separate feedforward network that takes the
+     same observation as input, or is an additional output of the GTrXL.
     
      Args:
         custom_model_kwargs:
@@ -686,6 +688,12 @@ class MLPplusGTrXL(RecurrentNetwork):
         if logger.isEnabledFor(logging.INFO):
             print("custom_model_kwargs: {}".format(custom_model_kwargs))
 
+        # Encoder parameters
+        self.encoder_hiddens = list(custom_model_kwargs.get("encoder_hiddens", []))
+        self.encoder_activation = custom_model_kwargs.get("encoder_activation")
+        encoder_activation = get_activation_fn(self.encoder_activation)
+
+        # GTrXL parameters
         self.num_transformer_units = custom_model_kwargs.get("num_transformer_units")
         self.attention_dim = custom_model_kwargs.get("attention_dim")
         self.num_heads = custom_model_kwargs.get("num_heads")
@@ -694,20 +702,19 @@ class MLPplusGTrXL(RecurrentNetwork):
         self.memory_training = self.memory_inference
         self.position_wise_mlp_dim = custom_model_kwargs.get("position_wise_mlp_dim")
         self.init_gru_gate_bias = custom_model_kwargs.get("init_gru_gate_bias")
+        self.use_n_prev_actions = custom_model_kwargs.get("use_n_prev_actions")
+        self.use_n_prev_rewards = custom_model_kwargs.get("use_n_prev_rewards")
         self.max_seq_len = model_config.get("max_seq_len")
-        
-        self.encoder_hiddens = list(custom_model_kwargs.get("encoder_hiddens", []))
-        self.encoder_activation = custom_model_kwargs.get("encoder_activation")
-        encoder_activation = get_activation_fn(self.encoder_activation)
-
-        vf_share_layers = model_config.get("vf_share_layers")
         free_log_std = model_config.get("free_log_std")
-        if not vf_share_layers:
+        
+        # Value function parameters
+        self.vf_share_layers = model_config.get("vf_share_layers")
+        if not self.vf_share_layers:
             self.vf_hiddens = list(custom_model_kwargs.get("vf_hiddens", []))
             self.vf_activation = custom_model_kwargs.get("vf_activation")
             vf_activation = get_activation_fn(self.vf_activation)
 
-        self.obs_dim = obs_space.shape[0]
+        # Number of outputs (logit dim)
         self.num_outputs = num_outputs
 
         # Generate free-floating bias variables for the second half of
@@ -722,9 +729,50 @@ class MLPplusGTrXL(RecurrentNetwork):
                 [0.0] * num_outputs, dtype=tf.float32, name="log_std"
             )
 
-        # Raw observation input (plus (None) time axis).
-        input_layer = tf.keras.layers.Input(
-            shape=(None, self.obs_dim), name="inputs")
+        # Action dimension
+        if isinstance(action_space, Discrete):
+            self.action_dim = action_space.n
+        elif isinstance(action_space, MultiDiscrete):
+            self.action_dim = np.sum(action_space.nvec)
+        elif action_space.shape is not None:
+            self.action_dim = int(np.product(action_space.shape))
+        else:
+            self.action_dim = int(len(action_space))
+
+        ## DEFINE ENCODER LAYERS ##
+            
+        # Input layer
+        input_layer_encoder = tf.keras.layers.Input(
+            shape=(int(np.product(obs_space.shape)), ), name="observations"
+        )
+
+        # Encoder hidden layers
+        last_layer_encoder = input_layer_encoder
+        i = 1
+        for size in self.encoder_hiddens:
+            last_layer_encoder = tf.keras.layers.Dense(
+                size,
+                name="fc_encoder_{}".format(i),
+                activation=encoder_activation,
+                kernel_initializer=normc_initializer(1.0),
+            )(last_layer_encoder)
+            i += 1
+
+        # Number of outputs (logit dim)
+        self.encoder_out_size = self.encoder_hiddens[-1]
+
+        ## DEFINE GTRXL LAYERS ##      
+
+        # Add prev-action/reward nodes to input to GTrXL.
+        self.num_gtrxl_inputs = self.encoder_out_size
+        if self.use_n_prev_actions:
+            self.num_gtrxl_inputs += self.use_n_prev_actions * self.action_dim
+        if self.use_n_prev_rewards:
+            self.num_gtrxl_inputs += self.use_n_prev_rewards
+
+        # Input layer
+        input_layer_gtrxl = tf.keras.layers.Input(
+            shape=(None, self.num_gtrxl_inputs), name="inputs_gtrxl")
         memory_ins = [
             tf.keras.layers.Input(
                 shape=(None, self.attention_dim),
@@ -732,27 +780,10 @@ class MLPplusGTrXL(RecurrentNetwork):
                 name="memory_in_{}".format(i))
             for i in range(self.num_transformer_units)
         ]
-
-        # Preprocess observation with the encoder_hiddens and send the output to the LSTM cell
-        last_layer = input_layer
-        if len(self.encoder_hiddens) > 0:
-            i = 1
-            for size in self.encoder_hiddens:
-                last_layer = tf.keras.layers.Dense(
-                    size,
-                    name="fc_encoder_{}".format(i),
-                    activation=encoder_activation,
-                    kernel_initializer=normc_initializer(1.0),
-                )(last_layer)
-                i += 1
-
-        # Map observation dim to input/output transformer (attention) dim.
-        E_out = tf.keras.layers.Dense(self.attention_dim)(last_layer)
-        # Output, collected and concat'd to build the internal, tau-len
-        # Memory units used for additional contextual information.
+        E_out = tf.keras.layers.Dense(self.attention_dim)(input_layer_gtrxl)
         memory_outs = [E_out]
 
-        # 2) Create L Transformer blocks according to [2].
+        # GTrXL layers
         for i in range(self.num_transformer_units):
             # RelativeMultiHeadAttention part.
             MHA_out = SkipConnection(
@@ -775,12 +806,9 @@ class MLPplusGTrXL(RecurrentNetwork):
                          output_activation=tf.nn.relu))),
                 fan_in_layer=GRUGate(self.init_gru_gate_bias),
                 name="pos_wise_mlp_{}".format(i + 1))(MHA_out)
-            # Output of position-wise MLP == E(l-1), which is concat'd
-            # to the current Mem block (M(l-1)) to yield E~(l-1), which is then
-            # used by the next transformer block.
             memory_outs.append(E_out)
 
-        # Postprocess TrXL output with another hidden layer and compute values.
+        # Output layer
         logits = tf.keras.layers.Dense(
             num_outputs, activation=tf.keras.activations.linear, name="logits"
         )(E_out)
@@ -789,14 +817,17 @@ class MLPplusGTrXL(RecurrentNetwork):
         if free_log_std:
 
             def tiled_log_std(x):
-                return tf.tile(tf.expand_dims(tf.expand_dims(self.log_std_var, 0),1), [tf.shape(x)[0], tf.shape(x)[1], 1])
+                return tf.tile(tf.expand_dims(tf.expand_dims(self.log_std_var, 0),1), \
+                               [tf.shape(x)[0], tf.shape(x)[1], 1])
 
-            log_std_out = tf.keras.layers.Lambda(tiled_log_std)(input_layer)
+            log_std_out = tf.keras.layers.Lambda(tiled_log_std)(input_layer_gtrxl)
             logits = tf.keras.layers.Concatenate(axis=2)([logits, log_std_out])
         
-        # Compute value estimate with the vf_hiddens
-        if not vf_share_layers:
-            last_vf_layer = input_layer
+        ## DEFINE VALUE FUNCTION LAYERS ##
+        
+        # Value function hiddens layers
+        if not self.vf_share_layers:
+            last_vf_layer = input_layer_encoder
             i = 1
             for size in self.vf_hiddens:
                 last_vf_layer = tf.keras.layers.Dense(
@@ -808,6 +839,8 @@ class MLPplusGTrXL(RecurrentNetwork):
                 i += 1
         else:
             last_vf_layer = E_out
+        
+        # Output layer
         value_out = tf.keras.layers.Dense(
             1,
             name="value_out",
@@ -815,15 +848,32 @@ class MLPplusGTrXL(RecurrentNetwork):
             kernel_initializer=normc_initializer(0.01),
         )(last_vf_layer)
 
-        outs = [logits, value_out]
+        ## CREATE THE MODELS ##
 
+        # Encoder model
+        if self.vf_share_layers:
+            self.encoder_model = tf.keras.Model(
+                inputs=input_layer_encoder, outputs=last_layer_encoder
+            )
+        else:
+            self.encoder_model = tf.keras.Model(
+                inputs=input_layer_encoder, outputs=[last_layer_encoder, value_out]
+            )
+
+        # GTrXL model
+        if self.vf_share_layers:
+            outs = [logits, value_out]
+        else:
+            outs = [logits]
         self.gtrxl_model = tf.keras.Model(
-            inputs=[input_layer] + memory_ins, outputs=outs + memory_outs[:-1])
+            inputs=[input_layer_gtrxl] + memory_ins, outputs=outs + memory_outs[:-1])
 
+        # Print out model summary in INFO logging mode.
+        # if logger.isEnabledFor(logging.INFO):
+        self.encoder_model.summary()
         self.gtrxl_model.summary()
 
-        # __sphinx_doc_begin__
-        # Setup trajectory views (`memory-inference` x past memory outs).
+        # Add prev steps to this model's view, if required.
         for i in range(self.num_transformer_units):
             space = Box(-1.0, 1.0, shape=(self.attention_dim, ))
             self.view_requirements["state_in_{}".format(i)] = \
@@ -837,13 +887,75 @@ class MLPplusGTrXL(RecurrentNetwork):
                 ViewRequirement(
                     space=space,
                     used_for_training=False)
-        # __sphinx_doc_end__
+        self.view_requirements["obs"].space = self.obs_space
+        
+        # Add prev-a/r to this model's view, if required.
+        if self.use_n_prev_actions:
+            self.view_requirements[SampleBatch.PREV_ACTIONS] = \
+                ViewRequirement(
+                    SampleBatch.ACTIONS,
+                    space=self.action_space,
+                    shift="-{}:-1".format(self.use_n_prev_actions))
+        if self.use_n_prev_rewards:
+            self.view_requirements[SampleBatch.PREV_REWARDS] = \
+                ViewRequirement(
+                    SampleBatch.REWARDS,
+                    shift="-{}:-1".format(self.use_n_prev_rewards))
+
 
     @override(ModelV2)
     def forward(self, input_dict, state: List[TensorType],
                 seq_lens: TensorType) -> tuple[TensorType, List[TensorType]]:
+        
         assert seq_lens is not None
 
+        # Push observations through encoder net's `forward()` first.
+        if self.vf_share_layers:
+            wrapped_out = self.encoder_model(input_dict["obs_flat"])
+        else:
+            wrapped_out, self._value_out = self.encoder_model(input_dict["obs_flat"])
+
+        # Concat. prev-action/reward if required.
+        prev_a_r = []
+        if self.use_n_prev_actions:
+            if isinstance(self.action_space, Discrete):
+                for i in range(self.use_n_prev_actions):
+                    prev_a_r.append(
+                        one_hot(input_dict[SampleBatch.PREV_ACTIONS][:, i],
+                                self.action_space))
+            elif isinstance(self.action_space, MultiDiscrete):
+                for i in range(
+                        self.use_n_prev_actions,
+                        step=self.action_space.shape[0]):
+                    prev_a_r.append(
+                        one_hot(
+                            tf.cast(
+                                input_dict[SampleBatch.PREV_ACTIONS]
+                                [:, i:i + self.action_space.shape[0]],
+                                tf.float32), self.action_space))
+            else:
+                prev_a_r.append(
+                    tf.reshape(
+                        tf.cast(input_dict[SampleBatch.PREV_ACTIONS],
+                                tf.float32),
+                        [-1, self.use_n_prev_actions * self.action_dim]))
+        if self.use_n_prev_rewards:
+            prev_a_r.append(
+                tf.reshape(
+                    tf.cast(input_dict[SampleBatch.PREV_REWARDS], tf.float32),
+                    [-1, self.use_n_prev_rewards]))
+        
+        if prev_a_r:
+            wrapped_out = tf.concat([wrapped_out] + prev_a_r, axis=1)
+        
+        # Then through the GTrXL
+        input_dict["obs_flat"] = input_dict["obs"] = wrapped_out
+
+        return self.forward_gtrxl(input_dict, state, seq_lens)
+
+
+    def forward_gtrxl(self, input_dict, state, seq_lens):
+        
         # Add the time dim to observations.
         B = tf.shape(seq_lens)[0]
         observations = input_dict[SampleBatch.OBS]
@@ -856,8 +968,11 @@ class MLPplusGTrXL(RecurrentNetwork):
         all_out = self.gtrxl_model([observations] + state)
 
         out = tf.reshape(all_out[0], [-1, self.num_outputs])
-        self._value_out = all_out[1]
-        memory_outs = all_out[2:]
+        if self.vf_share_layers:
+            self._value_out = all_out[1]
+            memory_outs = all_out[2:]
+        else:
+            memory_outs = all_out[1:]
 
         return out, [
             tf.reshape(m, [-1, self.attention_dim]) for m in memory_outs
