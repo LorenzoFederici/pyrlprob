@@ -160,7 +160,8 @@ class RLProblem:
         Args:
             logdir (str): name of the directory where training results are saved
             evaluate (bool): whether to do evaluation
-            best_metric (str): metric to be used to determine the best checkpoint in exp_dir during evaluation
+            best_metric (str): metric to be used to determine the best checkpoint in exp_dir during evaluation.
+                It it is a number, that checkpoint will be used.
             min_or_max (str): if best_metric must be minimized or maximized
             postprocess (bool): whether to do postprocessing
             debug (bool): whether to print worker's logs.
@@ -239,7 +240,8 @@ class RLProblem:
             trainer_dir (str): trainer directory
             exp_dir (str): experiment directory
             last_checkpoint (int): last checkpoint of the experiment
-            best_metric (str): metric to be used to determine the best checkpoint in exp_dir
+            best_metric (str): metric to be used to determine the best checkpoint in exp_dirs.
+                It it is a number, that checkpoint will be used.
             min_or_max (str): if best_metric must be minimized or maximized
             do_postprocess (bool): whether to do postprocessing
             debug (bool): is debugging mode on?

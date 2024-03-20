@@ -152,7 +152,8 @@ def evaluation(trainer: Union[str, Callable, Type],
         evaluation_num_episodes (int): number of evaluation episodes
         evaluation_config (dict): dictionary containing the evaluation configs
         custom_eval_function (callable or str): Custom evaluation function (or function name)
-        best_metric (str): metric to be used to determine the best checkpoint in exp_dirs
+        best_metric (str): metric to be used to determine the best checkpoint in exp_dirs.
+            It it is a number, that checkpoint will be used.
         min_or_max (str): if best_metric must be minimized or maximized
         metrics_and_data (dict): dictionary containing the metrics and data to save
             in the new file progress.csv
@@ -167,14 +168,18 @@ def evaluation(trainer: Union[str, Callable, Type],
         metric_path = "evaluation/"
 
     if trainer_dir is not None:
-        # Determine the best checkpoint
-        best_metric_trend = metric_training_trend(metric_path + best_metric,
-                                            exp_dirs,
-                                            last_cps)
-        if min_or_max == "max":
-            best_cp = np.argmax(best_metric_trend)+1
+        # Check if best_metric is a number
+        if best_metric.isdigit():
+            best_cp = int(best_metric)
         else:
-            best_cp = np.argmin(best_metric_trend)+1
+            # Get the best metric trend
+            best_metric_trend = metric_training_trend(metric_path + best_metric,
+                                                exp_dirs,
+                                                last_cps)
+            if min_or_max == "max":
+                best_cp = np.argmax(best_metric_trend)+1
+            else:
+                best_cp = np.argmin(best_metric_trend)+1
         best_exp = next(exp for exp, cp in enumerate(last_cps) if cp >= best_cp)
         best_exp_dir = exp_dirs[best_exp]
 
