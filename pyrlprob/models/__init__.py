@@ -1,7 +1,5 @@
-from pyrlprob.models.models import FCModelforRNNs, MLPplusLSTM, MLPplusGTrXL
+from pyrlprob.models.models import ActorCriticModel
 
 __all__ = [
-    "FCModelforRNNs",
-    "MLPplusLSTM",
-    "MLPplusGTrXL"
+    "ActorCriticModel"
 ]

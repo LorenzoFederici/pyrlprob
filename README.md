@@ -16,7 +16,16 @@ PyRLprob is an open-source python library for training, evaluation, and postproc
 
 ## Installation
 
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install the latest stable release of pyRLprob, with all its dependencies:
+After installing [Anaconda](https://www.anaconda.com/distribution/), you can create a virtual environment with a specific Python version (3.9.x) by using conda:
+```bash
+conda create --name myenv python=3.9
+```
+where `myenv` is the name of the environment, and activate the environment with:
+```bash
+conda activate myenv
+```
+
+Then, use the package manager [pip](https://pip.pypa.io/en/stable/) to install the latest stable release of pyRLprob, with all its dependencies:
 
 ```bash
 pip install pyrlprob

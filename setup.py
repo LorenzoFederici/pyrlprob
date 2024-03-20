@@ -5,7 +5,7 @@ this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
 setup(name='pyrlprob',
-    version='2.2.2',
+    version='2.3.0',
     author='Lorenzo Federici',
     author_email = 'federicilorenzo94@gmail.com',
     description = 'Train Gym-derived environments in Python/C++ through Ray RLlib',
@@ -31,7 +31,7 @@ setup(name='pyrlprob',
         'scikit-image',
         'opencv-python; platform_machine=="x86_64"',
         'tabulate',
-        'tensorflow',
+        'tensorflow==2.15.0',
         'tensorboardx; platform_machine=="x86_64"',
         'torch',
         'typing',

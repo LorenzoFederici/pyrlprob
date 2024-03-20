@@ -1,7 +1,7 @@
 run: ppo
 
 stop:
-  training_iteration: 100
+  training_iteration: 50
 
 custom_metrics:
 - cstr_viol
@@ -42,28 +42,47 @@ config:
   vf_clip_param: 10.0
 
   model:
-    custom_model: MLPplusGTrXL
+    custom_model: ActorCriticModel
+
     custom_model_config:
-      encoder_hiddens: [64, 64]
-      encoder_activation: tanh
+        policy_net:
+          mlp_hiddens: [64, 64]
+          mlp_activation: tanh
+          free_log_std: True
 
-      num_transformer_units: 1
-      attention_dim: 32
-      num_heads: 2
-      head_dim: 16
-      memory_inference: 20
-      position_wise_mlp_dim: 32
-      init_gru_gate_bias: 2.0
-      use_n_prev_actions: 20
-      use_n_prev_rewards: 20
+          use_lstm: False
 
-      vf_hiddens: [64, 64]
-      vf_activation: tanh
+          use_gtrxl: True
+          num_transformer_units: 2
+          attention_dim: 64
+          num_heads: 2
+          head_dim: 32
+          memory_inference: 10
+          position_wise_mlp_dim: 64
+          init_gru_gate_bias: 2.0
+          use_n_prev_actions: 10
+          use_n_prev_rewards: 10
+        
+        vf_net:
+          mlp_hiddens: [64, 64]
+          mlp_activation: tanh
 
-    vf_share_layers: False
-    free_log_std: True
-    max_seq_len: 20
-  
+          use_lstm: False
+
+          use_gtrxl: True
+          num_transformer_units: 1
+          attention_dim: 32
+          num_heads: 1
+          head_dim: 32
+          memory_inference: 10
+          position_wise_mlp_dim: 32
+          init_gru_gate_bias: 2.0
+          use_n_prev_actions: 10
+          use_n_prev_rewards: 10
+        
+        diff_obs: False
+        max_seq_len: 10
+
   #environment:
   env: pyrlprob.tests.py_tests.pyLanding1DEnv
   env_config:

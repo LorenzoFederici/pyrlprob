@@ -4,8 +4,6 @@ import numpy as np
 import pandas as pd
 import random
 import gym
-import tensorflow as tf
-import torch
 import collections.abc
 
 
@@ -14,12 +12,13 @@ def update(d, u):
     Update the elements in dictionary d with those in dictionary u.
     """
 
+    d_new = d.copy()
     for k, v in u.items():
         if isinstance(v, collections.abc.Mapping):
-            d[k] = update(d.get(k, {}), v)
+            d_new[k] = update(d_new.get(k, {}), v)
         else:
-            d[k] = v
-    return d
+            d_new[k] = v
+    return d_new
 
 
 def set_global_seeds(seed: Optional[int]=None) -> List[int]:

@@ -1,7 +1,7 @@
 run: ppo
 
 stop:
-  training_iteration: 100
+  training_iteration: 50
 
 custom_metrics:
 - cstr_viol
@@ -42,22 +42,31 @@ config:
   vf_clip_param: 10.0
 
   model:
-    custom_model: MLPplusLSTM
+    custom_model: ActorCriticModel
+
     custom_model_config:
-      encoder_hiddens: [64, 64]
-      encoder_activation: tanh
+        policy_net:
+          mlp_hiddens: [64, 64]
+          mlp_activation: tanh
+          free_log_std: True
 
-      lstm_cell_size: 32
-      lstm_use_prev_action: True
-      lstm_use_prev_reward: True
+          use_lstm: True
+          lstm_cell_size: 64
+          lstm_use_prev_action: True
+          lstm_use_prev_reward: True
+        
+        vf_net:
+          mlp_hiddens: [64, 64]
+          mlp_activation: tanh
 
-      vf_hiddens: [64, 64]
-      vf_activation: tanh
+          use_lstm: True
+          lstm_cell_size: 32
+          lstm_use_prev_action: True
+          lstm_use_prev_reward: True
+        
+        diff_obs: False
+        max_seq_len: 10
 
-    vf_share_layers: False
-    free_log_std: True
-    max_seq_len: 20
-  
   #environment:
   env: pyrlprob.tests.py_tests.pyLanding1DEnv
   env_config:

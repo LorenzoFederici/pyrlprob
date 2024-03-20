@@ -48,7 +48,7 @@ class RLProblem:
 
         #Config definition
         self.config = alg_module.DEFAULT_CONFIG.copy()
-        update(self.config, settings["config"])
+        self.config = update(self.config, settings["config"])
 
         #Evironment definition
         if "." in self.config["env"]:
@@ -62,8 +62,7 @@ class RLProblem:
         #Model definition
         self.model = self.config["model"]
         if self.model["custom_model"] is not None:
-            if self.model["custom_model"] in ["FCModelforRNNs", "MLPplusLSTM", \
-                                              "MLPplusGTrXL"]:
+            if self.model["custom_model"] in ["ActorCriticModel"]:
                 custom_model = getattr(models, self.model["custom_model"])
                 self.model["custom_model"] = "pyrlprob.models." + self.model["custom_model"]
 
@@ -98,7 +97,7 @@ class RLProblem:
                 if "final_evaluation_config" in settings:
                     self.final_evaluation_config = settings["final_evaluation_config"]
         if self.evaluation_config is not None and self.evaluation_config != {}:
-            update(self.evaluation_config, self.final_evaluation_config)
+            self.evaluation_config = update(self.evaluation_config, self.final_evaluation_config)
         else:
             self.evaluation_config = self.final_evaluation_config
         if "record_env" in self.evaluation_config:
