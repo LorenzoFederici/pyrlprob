@@ -192,8 +192,17 @@ class ActorCriticModel(TFModelV2):
         self.view_requirements["obs"].space = self.original_space
 
         if self.actor_use_lstm or self.critic_use_lstm:
-            use_prev_action = self.actor_lstm_use_prev_action or self.critic_lstm_use_prev_action
-            use_prev_reward = self.actor_lstm_use_prev_reward or self.critic_lstm_use_prev_reward
+
+            use_prev_action = False
+            use_prev_reward = False
+
+            if self.actor_use_lstm:
+                use_prev_action = use_prev_action or self.actor_lstm_use_prev_action
+                use_prev_reward = use_prev_reward or self.actor_lstm_use_prev_reward
+            
+            if self.critic_use_lstm:
+                use_prev_action = use_prev_action or self.critic_lstm_use_prev_action
+                use_prev_reward = use_prev_reward or self.critic_lstm_use_prev_reward
 
             setup_trajectory_view_lstm(use_prev_action, use_prev_reward, action_space, self.view_requirements)
         
