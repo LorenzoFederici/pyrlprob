@@ -6,6 +6,7 @@ from ray.rllib.utils.framework import try_import_tf
 from ray.rllib.utils.annotations import override
 from ray.rllib.utils.tf_ops import one_hot
 from ray.rllib.policy.sample_batch import SampleBatch
+from ray.rllib.models.tf.recurrent_net import RecurrentNetwork
 from gym.spaces import Discrete, MultiDiscrete, Tuple
 import numpy as np
 from pyrlprob.utils import update
@@ -15,7 +16,7 @@ tf1, tf, tfv = try_import_tf()
 logger = logging.getLogger(__name__)
 
 
-class ActorCriticModel(TFModelV2):
+class ActorCriticModel(RecurrentNetwork):
     """General Actor-Critic model with different networks for the policy (actor) and value function (critic), 
     and possibly taking as input different observations for the actor and critic.
     The actor is an MLP, possibly preceded by a CNN, and possibly followed by an LSTM or GTrXL, 
@@ -124,7 +125,8 @@ class ActorCriticModel(TFModelV2):
             self.actor_attention_dim = self.policy_net_config.get("attention_dim", 64)
             self.actor_use_n_prev_actions = self.policy_net_config.get("use_n_prev_actions", 0)
             self.actor_use_n_prev_rewards = self.policy_net_config.get("use_n_prev_rewards", 0)
-            self.actor_memory_training = self.policy_net_config.get("memory_inference", 16)
+            self.actor_memory_inference = self.policy_net_config.get("memory_inference", 16)
+            self.memory_training = self.actor_memory_inference
         self.critic_use_lstm = self.vf_net_config.get("use_lstm", False)
         if self.critic_use_lstm:
             self.critic_rec_size = self.vf_net_config.get("lstm_cell_size", 64)
@@ -137,7 +139,8 @@ class ActorCriticModel(TFModelV2):
             self.critic_attention_dim = self.vf_net_config.get("attention_dim", 64)
             self.critic_use_n_prev_actions = self.vf_net_config.get("use_n_prev_actions", 0)
             self.critic_use_n_prev_rewards = self.vf_net_config.get("use_n_prev_rewards", 0)
-            self.critic_memory_training = self.vf_net_config.get("memory_inference", 16)
+            self.critic_memory_inference = self.vf_net_config.get("memory_inference", 16)
+            self.memory_training = self.critic_memory_inference
         
         if self.actor_use_gtrxl and self.critic_use_gtrxl:
             if self.actor_use_n_prev_actions != self.critic_use_n_prev_actions:
@@ -146,6 +149,8 @@ class ActorCriticModel(TFModelV2):
             if self.actor_use_n_prev_rewards != self.critic_use_n_prev_rewards:
                 if self.actor_use_n_prev_rewards > 0 and self.critic_use_n_prev_rewards > 0:
                     raise ValueError("The number of previous rewards of the actor and critic GTrXL must be the same!")
+            if self.actor_memory_inference != self.critic_memory_inference:
+                raise ValueError("The memory inference of the actor and critic GTrXL must be the same!")
             
         # Others
         self.diff_obs = custom_model_kwargs.get("diff_obs", False)
@@ -157,6 +162,8 @@ class ActorCriticModel(TFModelV2):
 
         # Number of outputs
         self.num_outputs = num_outputs
+        self.num_outputs_actor = num_outputs
+        self.num_outputs_critic = 1
 
         # Number of actions
         self.action_dim = compute_action_dim(action_space)
@@ -179,14 +186,14 @@ class ActorCriticModel(TFModelV2):
             self.vf_obs_space = Tuple([self.vf_obs_space])
         
         # Build the actor network
-        self.actor_cnns, self.actor_one_hot, self.actor_flatten, self.actor_post_mlp, \
-            self.actor_rec, self.actor_final_layer = conv_mlp_rec_model(
-                self.policy_net_config, self.policy_obs_space, action_space, num_outputs)
+        self.actor_cnns, self.actor_one_hot, self.actor_flatten, self.actor_mlp, \
+            self.actor_output = conv_mlp_rec_model(
+                self.policy_net_config, self.policy_obs_space, action_space, self.num_outputs_actor)
         
         # Build the critic network
-        self.critic_cnns, self.critic_one_hot, self.critic_flatten, self.critic_post_mlp, \
-            self.critic_rec, self.critic_final_layer = conv_mlp_rec_model(
-                self.vf_net_config, self.vf_obs_space, action_space, 1)
+        self.critic_cnns, self.critic_one_hot, self.critic_flatten, self.critic_mlp, \
+            self.critic_output = conv_mlp_rec_model(
+                self.vf_net_config, self.vf_obs_space, action_space, self.num_outputs_critic)
         
         # Trajectory view requirements
         self.view_requirements["obs"].space = self.original_space
@@ -217,14 +224,14 @@ class ActorCriticModel(TFModelV2):
             if self.actor_use_gtrxl:
                 num_transformer_units_list.append(self.actor_num_transformer_units)
                 attention_dim_list.append(self.actor_attention_dim)
-                memory_inference_list.append(self.actor_memory_training)
+                memory_inference_list.append(self.actor_memory_inference)
                 use_n_prev_actions = max(use_n_prev_actions, self.actor_use_n_prev_actions)
                 use_n_prev_rewards = max(use_n_prev_rewards, self.actor_use_n_prev_rewards)
 
             if self.critic_use_gtrxl:
                 num_transformer_units_list.append(self.critic_num_transformer_units)
                 attention_dim_list.append(self.critic_attention_dim)
-                memory_inference_list.append(self.critic_memory_training)
+                memory_inference_list.append(self.critic_memory_inference)
                 use_n_prev_actions = max(use_n_prev_actions, self.critic_use_n_prev_actions)
                 use_n_prev_rewards = max(use_n_prev_rewards, self.critic_use_n_prev_rewards)
             
@@ -236,12 +243,16 @@ class ActorCriticModel(TFModelV2):
 
     @override(ModelV2)
     def forward(self, input_dict, state, seq_lens):
+        
+        # Number of outputs
+        self.num_outputs = self.num_outputs_actor
+        
         if SampleBatch.OBS in input_dict and "obs_flat" in input_dict:
             orig_obs = input_dict[SampleBatch.OBS]
         else:
             orig_obs = restore_original_dimensions(input_dict[SampleBatch.OBS],
-                                                self.obs_space, "tf")
-
+                                                self.original_space, "tf")
+        
         # Divide actor and critic observations
         if self.diff_obs:
             actor_obs = orig_obs[0]
@@ -262,7 +273,7 @@ class ActorCriticModel(TFModelV2):
         actor_outs = []
         for i, component in enumerate(actor_obs):
             if i in self.actor_cnns:
-                cnn_out, _ = self.actor_cnns[i]({SampleBatch.OBS: component})
+                cnn_out = self.actor_cnns[i](component)
                 actor_outs.append(cnn_out)
             elif i in self.actor_one_hot:
                 if component.dtype in [tf.int32, tf.int64, tf.uint8]:
@@ -276,12 +287,12 @@ class ActorCriticModel(TFModelV2):
         # Concat all outputs and the non-image inputs.
         actor_out = tf.concat(actor_outs, axis=1)
 
-        # Push through post-MLP-stack (this may be an empty stack).
-        actor_out, _ = self.actor_post_mlp({SampleBatch.OBS: actor_out}, [], None)
+        # Push through MLP
+        actor_out = self.actor_mlp(actor_out)
 
         # Push through (optional) recurrent layer.
         actor_state = []
-        if self.actor_rec is not None:
+        if self.actor_use_lstm or self.actor_use_gtrxl:
 
             # Extract the previous state from the state tensor.
             if self.actor_use_lstm:
@@ -307,6 +318,7 @@ class ActorCriticModel(TFModelV2):
                             tf.cast(input_dict[SampleBatch.PREV_REWARDS], tf.float32),
                             [-1, 1]))
             
+            # If the rec layer is a GTrXL, add the previous n actions and n rewards to the input.
             if self.actor_use_gtrxl:
                 if self.actor_use_n_prev_actions:
                     if isinstance(self.action_space, Discrete):
@@ -336,17 +348,34 @@ class ActorCriticModel(TFModelV2):
                             tf.cast(input_dict[SampleBatch.PREV_REWARDS], tf.float32),
                             [-1, self.actor_use_n_prev_rewards]))
             
-            if prev_a_r_actor:
+            if len(prev_a_r_actor) > 0:
                 actor_out = tf.concat([actor_out] + prev_a_r_actor, axis=1)
 
-            
-            actor_out, actor_state = self.forward_rnn(
-                self.actor_use_lstm, self.actor_use_gtrxl,
-                self.actor_rec, self.actor_rec_size, actor_out,
-                actor_state, seq_lens)
+            if self.actor_use_lstm:
+                # Recurrent model
+                self.rnn_model = self.actor_output
 
-        # Push through (optional) final layer.
-        actor_out = self.actor_final_layer(actor_out)
+                # Input to the rec model
+                input_dict["obs_flat"] = actor_out
+                
+                # Output
+                actor_out, actor_state = super().forward(input_dict, actor_state, seq_lens)
+
+            elif self.actor_use_gtrxl:
+                # Recurrent model
+                self.gtrxl_model = self.actor_output
+
+                # Attention dim
+                self.attention_dim = self.actor_attention_dim
+
+                # Input to the rec model
+                input_dict["obs_flat"] = input_dict["obs"] = actor_out
+
+                # Output
+                actor_out, actor_state = self.forward_gtrxl(input_dict, actor_state, seq_lens)
+        else:
+            # Push through final layer
+            actor_out = self.actor_output(actor_out)
 
         ## CRITIC FORWARD PASS ##
 
@@ -354,7 +383,7 @@ class ActorCriticModel(TFModelV2):
         critic_outs = []
         for i, component in enumerate(critic_obs):
             if i in self.critic_cnns:
-                cnn_out, _ = self.critic_cnns[i]({SampleBatch.OBS: component})
+                cnn_out = self.critic_cnns[i](component)
                 critic_outs.append(cnn_out)
             elif i in self.critic_one_hot:
                 if component.dtype in [tf.int32, tf.int64, tf.uint8]:
@@ -368,12 +397,12 @@ class ActorCriticModel(TFModelV2):
         # Concat all outputs and the non-image inputs.
         critic_out = tf.concat(critic_outs, axis=1)
 
-        # Push through post-MLP-stack (this may be an empty stack).
-        critic_out, _ = self.critic_post_mlp({SampleBatch.OBS: critic_out}, [], None)
+        # Push through MLP
+        critic_out = self.critic_mlp(critic_out)
 
         # Push through (optional) recurrent layer.
         critic_state = []
-        if self.critic_rec is not None:
+        if self.critic_use_lstm or self.critic_use_gtrxl:
 
             # Extract the previous state from the state tensor.
             if self.critic_use_lstm:
@@ -409,6 +438,7 @@ class ActorCriticModel(TFModelV2):
                             tf.cast(input_dict[SampleBatch.PREV_REWARDS], tf.float32),
                             [-1, 1]))
             
+            # If the rec layer is a GTrXL, add the previous n actions and n rewards to the input.
             if self.critic_use_gtrxl:
                 if self.critic_use_n_prev_actions:
                     if isinstance(self.action_space, Discrete):
@@ -438,16 +468,40 @@ class ActorCriticModel(TFModelV2):
                             tf.cast(input_dict[SampleBatch.PREV_REWARDS], tf.float32),
                             [-1, self.critic_use_n_prev_rewards]))
             
-            if prev_a_r_critic:
+            if len(prev_a_r_critic) > 0:
                 critic_out = tf.concat([critic_out] + prev_a_r_critic, axis=1)
             
-            critic_out, critic_state = self.forward_rnn(
-                self.critic_use_lstm, self.critic_use_gtrxl,
-                self.critic_rec, self.critic_rec_size, critic_out,
-                critic_state, seq_lens)
-        
-        # Push through (optional) final layer.
-        self._critic_out = self.critic_final_layer(critic_out)
+            if self.critic_use_lstm:
+                # Recurrent model
+                self.rnn_model = self.critic_output
+
+                # Input to the rec model
+                input_dict["obs_flat"] = critic_out
+
+                # Number of outputs
+                self.num_outputs = self.num_outputs_critic
+                
+                # Output
+                self._critic_out, critic_state = super().forward(input_dict, critic_state, seq_lens)
+            
+            elif self.critic_use_gtrxl:
+                # Recurrent model
+                self.gtrxl_model = self.critic_output
+
+                # Attention dim
+                self.attention_dim = self.critic_attention_dim
+
+                # Input to the rec model
+                input_dict["obs_flat"] = input_dict["obs"] = critic_out
+
+                # Number of outputs
+                self.num_outputs = self.num_outputs_critic
+
+                # Output
+                self._critic_out, critic_state = self.forward_gtrxl(input_dict, critic_state, seq_lens)
+        else:
+            # Push through final layer
+            self._critic_out = self.critic_output(critic_out)
 
         # State outputs
         if len(actor_state) == 0 and len(critic_state) == 0:
@@ -458,38 +512,67 @@ class ActorCriticModel(TFModelV2):
         return actor_out, state_out
 
 
-    def forward_rnn(self, use_lstm, use_gtrxl, rec_model, model_dim, obs, state, seq_lens):
-            
+    @override(RecurrentNetwork)
+    def forward_rnn(self, inputs, state, seq_lens):
+
+        model_out, h, c = self.rnn_model([inputs, seq_lens] + state)
+        
+        return model_out, [h, c]
+    
+
+    def forward_gtrxl(self, input_dict, state, seq_lens):
+        
         # Add the time dim to observations.
         B = tf.shape(seq_lens)[0]
-        observations = obs
+        observations = input_dict[SampleBatch.OBS]
+
         shape = tf.shape(observations)
         T = shape[0] // B
-
-        if use_lstm:
-            new_batch_size = shape[0] // T
-        elif use_gtrxl:
-            new_batch_size = -1
-
-        # Flatten the (B, T, ...) observations to (B * T, ...).
         observations = tf.reshape(observations,
-                                    tf.concat([[new_batch_size, T], shape[1:]], axis=0))
+                                  tf.concat([[-1, T], shape[1:]], axis=0))
 
-        # Push through the recurrent model
-        if use_lstm:
-            all_out = rec_model([observations, seq_lens] + state)
-        elif use_gtrxl:
-            all_out = rec_model([observations] + state)
+        all_out = self.gtrxl_model([observations] + state)
 
-        # Output
-        out = tf.reshape(all_out[0], [-1, model_dim])
-
-        # Extract the state
-        new_state = all_out[1:]
+        out = tf.reshape(all_out[0], [-1, self.num_outputs])
+        memory_outs = all_out[1:]
 
         return out, [
-            tf.reshape(m, [-1, model_dim]) for m in new_state
+            tf.reshape(m, [-1, self.attention_dim]) for m in memory_outs
         ]
+
+
+    # def forward_rnn(self, use_lstm, use_gtrxl, model, model_dim, obs, state, seq_lens):
+
+    #     # Add the time dim to observations.
+    #     B = tf.shape(seq_lens)[0]
+    #     observations = obs
+    #     shape = tf.shape(observations)
+    #     T = shape[0] // B
+
+    #     if use_lstm:
+    #         new_batch_size = shape[0] // T
+    #     elif use_gtrxl:
+    #         new_batch_size = -1
+
+    #     # Flatten the (B, T, ...) observations to (B * T, ...).
+    #     observations = tf.reshape(observations,
+    #                                 tf.concat([[new_batch_size, T], shape[1:]], axis=0))
+
+    #     # Push through the recurrent model
+    #     if use_lstm:
+    #         all_out = model([observations, seq_lens] + state)
+    #     elif use_gtrxl:
+    #         all_out = model([observations] + state)
+
+    #     # Output
+    #     out = tf.reshape(all_out[0], [-1, model_dim])
+
+    #     # Extract the state
+    #     new_state = all_out[1:]
+
+    #     return out, [
+    #         tf.reshape(m, [-1, model_dim]) for m in new_state
+    #     ]
     
 
     @override(ModelV2)

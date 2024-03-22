@@ -45,27 +45,27 @@ config:
     custom_model: ActorCriticModel
 
     custom_model_config:
-        policy_net:
-          mlp_hiddens: [64, 64]
-          mlp_activation: tanh
-          free_log_std: True
+      policy_net:
+        mlp_hiddens: [64, 64]
+        mlp_activation: tanh
+        free_log_std: True
 
-          use_lstm: True
-          lstm_cell_size: 64
-          lstm_use_prev_action: True
-          lstm_use_prev_reward: True
-        
-        vf_net:
-          mlp_hiddens: [64, 64]
-          mlp_activation: tanh
+        use_lstm: True
+        lstm_cell_size: 64
+        lstm_use_prev_action: True
+        lstm_use_prev_reward: True
+      
+      vf_net:
+        mlp_hiddens: [64, 64]
+        mlp_activation: tanh
 
-          use_lstm: True
-          lstm_cell_size: 32
-          lstm_use_prev_action: True
-          lstm_use_prev_reward: True
-        
-        diff_obs: False
-        max_seq_len: 10
+        use_lstm: True
+        lstm_cell_size: 32
+        lstm_use_prev_action: True
+        lstm_use_prev_reward: True
+      
+      diff_obs: False
+    max_seq_len: 10
 
   #environment:
   env: pyrlprob.tests.py_tests.pyLanding1DEnv
