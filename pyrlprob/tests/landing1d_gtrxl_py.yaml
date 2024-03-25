@@ -46,6 +46,9 @@ config:
 
     custom_model_config:
       policy_net:
+        # # conv_filters: [[16, [11, 11], 6], [32, [7, 7], 4], [64, [5, 5], 3], [128, [3, 3], 2]]
+        # # conv_activation: relu
+
         mlp_hiddens: [64, 64]
         mlp_activation: tanh
         free_log_std: True

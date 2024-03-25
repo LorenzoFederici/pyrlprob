@@ -35,6 +35,14 @@ class pyLanding1DEnv(AbstractMDP):
 
         #Observation space
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)
+        # # # TEST: image + state
+        # # self.observation_space = spaces.Tuple((spaces.Box(low=0, high=255, \
+        # #         shape=(256, 256, 1), dtype=np.uint8), \
+        # #             spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32)))
+        # # self.observation_space = spaces.Tuple(( spaces.Tuple((spaces.Box(low=0, high=255, \
+        # #          shape=(256, 256, 1), dtype=np.uint8), \
+        # #              spaces.Box(low=-np.inf, high=np.inf, shape=(4,), dtype=np.float32))), \
+        # #                                        spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32)))
 
         #Action space
         self.action_space = spaces.Box(low=-1., high=1., shape=(1,), dtype=np.float32)
@@ -51,6 +59,14 @@ class pyLanding1DEnv(AbstractMDP):
         """
 
         observation = np.array([state["h"], state["v"], state["m"], state["t"]], dtype=np.float32)
+
+        # # # TEST: generate random image here
+        # # image = np.random.randint(0, 256, (256, 256, 1), dtype=np.uint8)
+
+        # # observation = (image, np.array([state["h"], state["v"], state["m"], state["t"]], dtype=np.float32))
+        # # observation = ((image, np.array([state["h"], state["v"], state["m"], state["t"]], dtype=np.float32)), \
+        # #                np.array([state["h"], state["v"], state["m"]], dtype=np.float32))
+
 
         return observation
     

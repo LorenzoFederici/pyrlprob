@@ -39,6 +39,9 @@ def cnn_plus_input_model(model_config, obs_space):
     conv_filters = list(model_config.get("conv_filters", []))
     conv_activation = model_config.get("conv_activation", "relu")
 
+    # Activation function
+    activation = get_activation_fn(conv_activation, framework="tf")
+
     # Process image inputs with CNN(s), and concat the
     # output with discrete and real inputs
     cnns = {}
@@ -48,10 +51,6 @@ def cnn_plus_input_model(model_config, obs_space):
     for i, component in enumerate(obs_space):
         # Image inputs -> CNN.
         if len(component.shape) == 3:
-            # Activation function
-            activation = get_activation_fn(
-                conv_activation, framework="tf")
-
             # Model
             input_layer_cnn = tf.keras.layers.Input(
                 shape=component.shape, name="inputs_cnn_{}".format(i)
@@ -59,7 +58,7 @@ def cnn_plus_input_model(model_config, obs_space):
 
             # CNN layers
             last_layer = input_layer_cnn
-            for i, (out_size, kernel, stride) in enumerate(conv_filters[:-1], 1):
+            for j, (out_size, kernel, stride) in enumerate(conv_filters[:-1], 1):
                 last_layer = tf.keras.layers.Conv2D(
                     out_size,
                     kernel, 
@@ -68,7 +67,7 @@ def cnn_plus_input_model(model_config, obs_space):
                     activation=activation,
                     padding="same", 
                     data_format="channels_last",
-                    name="conv_{}".format(i)
+                    name="conv_{}".format(j)
                 )(last_layer)
             
             # Last CNN layer
@@ -107,7 +106,7 @@ def cnn_plus_input_model(model_config, obs_space):
         else:
             flatten[i] = int(np.product(component.shape))
             num_outputs += flatten[i]
-    
+
     return cnns, one_hot, flatten, num_outputs
 
 

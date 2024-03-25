@@ -281,8 +281,10 @@ class ActorCriticModel(RecurrentNetwork):
                         one_hot(component, self.policy_obs_space.spaces[i]))
                 else:
                     actor_outs.append(component)
-            else:
+            elif i in self.actor_flatten:
                 actor_outs.append(tf.reshape(component, [-1, self.actor_flatten[i]]))
+            else:
+                assert False, "Invalid observation component!"
         
         # Concat all outputs and the non-image inputs.
         actor_out = tf.concat(actor_outs, axis=1)
