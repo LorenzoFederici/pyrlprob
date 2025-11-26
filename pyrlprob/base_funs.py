@@ -20,6 +20,7 @@ def training(trainer: Union[str, Callable, Type],
              min_or_max: str="max",
              num_cp_to_keep: str="all",
              evaluation_active: bool=False,
+             max_failures: int=0,
              logdir: Optional[str]=None,
              create_out_file: bool=True, 
              load: Optional[Dict[str, Any]]=None, 
@@ -39,6 +40,7 @@ def training(trainer: Union[str, Callable, Type],
         min_or_max (str): if best_metric must be minimized or maximized
         num_cp_to_keep (str): number of checkpoints to keep. If "all", all checkpoints are kept, if "best", only the best checkpoint is kept
         evaluation_active (bool): whether evaluation is active
+        max_failures (int): maximum number of times to retry a failed trial (if -1, retry indefinitely)
         logdir (str): name of the directory where training results are saved
         create_out_file (bool): whether to create an outfile with run time and best result
         load (dict): dictionary containing the directory and checkpoint where the 
@@ -97,6 +99,7 @@ def training(trainer: Union[str, Callable, Type],
                         config=config,
                         local_dir=outdir,
                         restore=restore,
+                        max_failures=max_failures,
                         stop=stop,
                         metric=best_metric,
                         mode=min_or_max,

@@ -150,6 +150,7 @@ class RLProblem:
               evaluate: bool=True, 
               best_metric: str="episode_reward_mean",
               min_or_max: str="max",
+              max_failures: int=0,
               postprocess: bool=True,
               debug: bool=False,
               open_ray: bool=True,
@@ -167,6 +168,7 @@ class RLProblem:
             evaluate (bool): whether to do evaluation
             best_metric (str): metric to be used to determine the best checkpoint in exp_dir during evaluation.
             min_or_max (str): if best_metric must be minimized or maximized
+            max_failures (int): maximum number of times to retry a failed trial (if -1, retry indefinitely)
             postprocess (bool): whether to do postprocessing
             debug (bool): whether to print worker's logs.
             open_ray (bool): whether to open/close ray
@@ -190,6 +192,7 @@ class RLProblem:
                                                                             min_or_max=min_or_max,
                                                                             num_cp_to_keep=num_cp_to_keep,
                                                                             evaluation_active=self.evaluation,
+                                                                            max_failures=max_failures,
                                                                             logdir=logdir,
                                                                             load=self.load,
                                                                             debug=debug,
@@ -203,6 +206,7 @@ class RLProblem:
                                                                   min_or_max=min_or_max,
                                                                   num_cp_to_keep=num_cp_to_keep,
                                                                   evaluation_active=self.evaluation,
+                                                                  max_failures=max_failures,
                                                                   logdir=logdir,
                                                                   load=self.load,
                                                                   debug=debug,
