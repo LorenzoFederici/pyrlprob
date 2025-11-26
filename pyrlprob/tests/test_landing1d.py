@@ -10,13 +10,16 @@ import matplotlib
 from pyrlprob.utils.plots import plot_metric
 
 
-def test_train_py(model: str="fcnet",
+def test_train_py(model: str="mlp",
+        use_gpu: bool=False,
         res_dir: Optional[str]=None) -> None:
     """
     Test pyrlprob training functionalities in the Landing1D environment
         written in python.
 
     Args:
+        model: mlp, lstm or gtrxl.
+        use_gpu: use GPU for training?
         res_dir: path where results are saved. Current directory if not specified.
     """
 
@@ -24,6 +27,7 @@ def test_train_py(model: str="fcnet",
     _, _, _, _ = \
         test_landing_env_train(py_or_cpp="py",
                                model=model,
+                               use_gpu=use_gpu,
                                res_dir=res_dir)
 
 
@@ -42,19 +46,23 @@ def test_train_cpp(res_dir: Optional[str]=None) -> None:
                                res_dir=res_dir)
 
 
-def test_train_eval_py(model: str="fcnet",
+def test_train_eval_py(model: str="mlp",
+                       use_gpu: bool=False,
                        res_dir: Optional[str]=None) -> None:
     """
     Test pyrlprob training, evaluation and post-processing functionalities 
         in the Landing1D environment written in python.
 
     Args:
+        model: mlp, lstm or gtrxl.
+        use_gpu: use GPU for training?
         res_dir: path where results are saved. Current directory if not specified.
     """
 
     #Train, evaluate, post-process
     test_landing_env_train_eval(py_or_cpp="py",
                                model=model,
+                               use_gpu=use_gpu,
                                res_dir=res_dir)
 
 
@@ -84,13 +92,16 @@ def make_cpp_lib() -> None:
 
 
 def test_landing_env_train(py_or_cpp: str="py",
-                           model: str="fcnet",
+                           model: str="mlp",
+                           use_gpu: bool=False,
                            res_dir: Optional[str]=None) -> Tuple[RLProblem, str, List[str], List[int]]:
     """
     Test pyrlprob training functionalities in the Landing1D environment.
 
     Args:
         py_or_cpp: python or cpp version of the environment?
+        model: mlp, lstm or gtrxl.
+        use_gpu: use GPU for training?
         res_dir: path where results are saved. Current directory if not specified.
     """
 
@@ -98,7 +109,10 @@ def test_landing_env_train(py_or_cpp: str="py",
     __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
     if py_or_cpp == "py":
         if model == "mlp":
-            config = os.path.join(__location__, "landing1d_py.yaml")
+            if use_gpu:
+                config = os.path.join(__location__, "landing1d_mlp_gpu_py.yaml")
+            else:
+                config = os.path.join(__location__, "landing1d_mlp_py.yaml")
         elif model == "lstm":
             config = os.path.join(__location__, "landing1d_lstm_py.yaml")
         elif model == "gtrxl":
@@ -124,7 +138,8 @@ def test_landing_env_train(py_or_cpp: str="py",
 
 
 def test_landing_env_train_eval(py_or_cpp: str="py",
-                                model: str="fcnet",
+                                model: str="mlp",
+                                use_gpu: bool=False,
                                 res_dir: Optional[str]=None) -> None:
     """
     Test pyrlprob training, evaluation and post-processing functionalities 
@@ -132,6 +147,8 @@ def test_landing_env_train_eval(py_or_cpp: str="py",
 
     Args:
         py_or_cpp: python or cpp version of the environment?
+        model: mlp, lstm or gtrxl.
+        use_gpu: use GPU for training?
         res_dir: path where results are saved. Current directory if not specified.
     """
 
@@ -142,6 +159,7 @@ def test_landing_env_train_eval(py_or_cpp: str="py",
     LandingProblem, trainer_dir, exp_dirs, last_cps = \
         test_landing_env_train(py_or_cpp=py_or_cpp,
                                model=model,
+                               use_gpu=use_gpu,
                                res_dir=res_dir)
 
     #Create new config file for model re-training
