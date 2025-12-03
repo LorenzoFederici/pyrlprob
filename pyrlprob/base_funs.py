@@ -248,25 +248,23 @@ def evaluation(trainer: Union[str, Callable, Type],
     config["evaluation_interval"] = 1
     if "env_config" in evaluation_config:
         if "prng_seed" in evaluation_config["env_config"]:
+            config["evaluation_num_workers"] = 1
+    
+    config["evaluation_num_workers"] = max(config["evaluation_num_workers"], 1)
+    if evaluation_num_episodes % config["num_envs_per_worker"]:
+        if evaluation_num_episodes % config["evaluation_num_workers"]:
             config["evaluation_num_episodes"] = evaluation_num_episodes
             config["num_envs_per_worker"] = 1
             config["evaluation_num_workers"] = 1
-    else:
-        config["evaluation_num_workers"] = max(config["evaluation_num_workers"], 1)
-        if evaluation_num_episodes % config["num_envs_per_worker"]:
-            if evaluation_num_episodes % config["evaluation_num_workers"]:
-                config["evaluation_num_episodes"] = evaluation_num_episodes
-                config["num_envs_per_worker"] = 1
-                config["evaluation_num_workers"] = 1
-            else:
-                config["evaluation_num_episodes"] = evaluation_num_episodes
-                config["num_envs_per_worker"] = 1
         else:
-            if evaluation_num_episodes % config["evaluation_num_workers"]:
-                config["evaluation_num_episodes"] = int(evaluation_num_episodes/config["num_envs_per_worker"])
-                config["evaluation_num_workers"] = 1
-            else:
-                config["evaluation_num_episodes"] = int(evaluation_num_episodes/config["num_envs_per_worker"])
+            config["evaluation_num_episodes"] = evaluation_num_episodes
+            config["num_envs_per_worker"] = 1
+    else:
+        if evaluation_num_episodes % config["evaluation_num_workers"]:
+            config["evaluation_num_episodes"] = int(evaluation_num_episodes/config["num_envs_per_worker"])
+            config["evaluation_num_workers"] = 1
+        else:
+            config["evaluation_num_episodes"] = int(evaluation_num_episodes/config["num_envs_per_worker"])
         
     if custom_eval_function is not None:
         if callable(custom_eval_function):
