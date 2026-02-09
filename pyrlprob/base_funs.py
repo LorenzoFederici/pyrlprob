@@ -241,6 +241,7 @@ def evaluation(trainer: Union[str, Callable, Type],
 
     # No learning
     config["lr"] = 0.
+    config["lr_schedule"] = None
 
     # Evaluation and callbacks config
     config["create_env_on_driver"] = False
