@@ -290,11 +290,13 @@ def evaluation(trainer: Union[str, Callable, Type],
                 print("GPUs not available on tf, using CPU only")
                 config["num_gpus"] = 0
     total_w = config["num_workers"] + config["evaluation_num_workers"]
-    # cpus_count = config["num_cpus_per_worker"]*total_w + config["num_cpus_for_driver"]
+    
+    cpus_count = config["num_cpus_per_worker"]*total_w + config["num_cpus_for_driver"]
     cpus_machine = multiprocessing.cpu_count()
-    # if cpus_count > cpus_machine:
-    config["num_cpus_per_worker"] = (cpus_machine - (1. - config["num_gpus"]))/total_w if (cpus_machine - (1. - config["num_gpus"]))/total_w < 1 else int((cpus_machine - (1. - config["num_gpus"]))/total_w)
-    config["num_cpus_for_driver"] = int(cpus_machine - config["num_cpus_per_worker"]*total_w)
+    if cpus_count > cpus_machine:
+        cpus_count = cpus_machine
+    config["num_cpus_per_worker"] = (cpus_count - (1. - config["num_gpus"]))/total_w if (cpus_count - (1. - config["num_gpus"]))/total_w < 1 else int((cpus_count - (1. - config["num_gpus"]))/total_w)
+    config["num_cpus_for_driver"] = int(cpus_count - config["num_cpus_per_worker"]*total_w)
 
     # Evaluation
     _, _, new_best_exp_dir, last_checkpoint  = training(trainer=trainer, 
