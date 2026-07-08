@@ -12,7 +12,8 @@ def plot_metric(metric_name: str,
                 factor: float = 1.,
                 fig: Optional[Callable] = None,
                 label: Optional[str] = None,
-                color: Optional[str] = None) -> Callable:
+                color: Optional[str] = None,
+                dash: Optional[str] = None) -> Callable:
     """
     plot the trend during training of a metric
 
@@ -26,6 +27,7 @@ def plot_metric(metric_name: str,
         fig (callable): figure object
         label (str): the label of the plotted curve
         color (str): color of the curve (if None -> random color)
+        dash (str): dash style of the curve (if None -> solid line)
     
     Return:
         fig: figure object
@@ -54,12 +56,18 @@ def plot_metric(metric_name: str,
         metric_std_min_mov = np.array(metric_mean_mov) - abs(np.array(metric_mean_mov) - np.array(metric_min_mov))/4.
         metric_std_max_mov = np.array(metric_mean_mov) + abs(np.array(metric_mean_mov) - np.array(metric_max_mov))/4.
 
+    # Plotting setup
+    if color is None:
+        color = np.random.rand(3,)
+    if dash is None:
+        dash = '-'
+    
     #Plot
     if fig is None:
         fig = plt.figure()
         fig.set_size_inches(9.7,6.4)
     ax = fig.gca()
-    ax.plot(training_iter_mov[::step], metric_mean_mov[::step]*factor, '-', linewidth='2.5', color=color, label=label)
+    ax.plot(training_iter_mov[::step], metric_mean_mov[::step]*factor, '-', linewidth='2.5', color=color, label=label, linestyle=dash)
     if metric_min !=  None:
         plt.fill_between(training_iter_mov[::step], metric_std_min_mov[::step]*factor, metric_std_max_mov[::step]*factor, alpha=0.3, color=color)
     
