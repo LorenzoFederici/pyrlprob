@@ -67,7 +67,7 @@ def plot_metric(metric_name: str,
         fig = plt.figure()
         fig.set_size_inches(9.7,6.4)
     ax = fig.gca()
-    ax.plot(training_iter_mov[::step], metric_mean_mov[::step]*factor, '-', linewidth='2.5', color=color, label=label, linestyle=dash)
+    ax.plot(training_iter_mov[::step], metric_mean_mov[::step]*factor, linewidth='2.5', color=color, label=label, linestyle=dash)
     if metric_min !=  None:
         plt.fill_between(training_iter_mov[::step], metric_std_min_mov[::step]*factor, metric_std_max_mov[::step]*factor, alpha=0.3, color=color)
     
